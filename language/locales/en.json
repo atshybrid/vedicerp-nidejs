@@ -1,0 +1,450 @@
+{
+  "messages": {
+    "apis": {
+      "auth": {
+        "common": {
+          "no_phone": "Provided phone is not registered yet.",
+          "phone_exists": "User already registered with this phone",
+          "incorrect_otp": "Incorrect otp. Please try again."
+        },
+        "request_otp": {
+          "success": "Otp has been sent successfully!",
+          "error": "Error sending new otp"
+        },
+        "login": {
+          "success": "You're logged in successfully!",
+          "error": "Error logging in"
+        },
+        "verify_otp": {
+          "success": "Otp verified successfully!",
+          "error": "Error verifying otp"
+        }
+      },
+      "admin": {},
+      "app": {
+        "bankaccount": {
+          "create": {
+            "success": "Bank account created successfully",
+            "error": "Error creating bankaccount"
+          },
+          "read": {
+            "success": "Bank account fetched successfully",
+            "error": "Error fetching bankaccount"
+          },
+          "update": {
+            "success": "Bank account updated successfully",
+            "error": "Error updating bankaccount"
+          },
+          "delete": {
+            "success": "Bank account deleted successfully",
+            "error": "Error deleting bankaccount"
+          },
+          "list": {
+            "success": "Bank accounts fetched successfully",
+            "error": "Error fetching bankaccounts"
+          }
+        },
+        "branch": {
+          "create": {
+            "success": "Branch created successfully",
+            "error": "Error creating branch"
+          },
+          "read": {
+            "success": "Branch fetched successfully",
+            "error": "Error fetching branch"
+          },
+          "update": {
+            "success": "Branch updated successfully",
+            "error": "Error updating branch"
+          },
+          "delete": {
+            "success": "Branch deleted successfully",
+            "error": "Error deleting branch"
+          },
+          "list": {
+            "success": "Branches fetched successfully",
+            "error": "Error fetching branches"
+          }
+        },
+        "branchitem": {
+          "create": {
+            "success": "Branch item created successfully",
+            "error": "Error creating branch item"
+          },
+          "read": {
+            "success": "Branch item fetched successfully",
+            "error": "Error fetching branch item"
+          },
+          "update": {
+            "success": "Branch item updated successfully",
+            "error": "Error updating branch item"
+          },
+          "delete": {
+            "success": "Branch item deleted successfully",
+            "error": "Error deleting branch item"
+          },
+          "list": {
+            "success": "Branch items fetched successfully",
+            "error": "Error fetching branch items"
+          }
+        },
+        "cashaccount": {
+          "create": {
+            "success": "Cash account created successfully",
+            "error": "Error creating cashaccount"
+          },
+          "read": {
+            "success": "Cash account fetched successfully",
+            "error": "Error fetching cashaccount"
+          },
+          "update": {
+            "success": "Cash account updated successfully",
+            "error": "Error updating cashaccount"
+          },
+          "delete": {
+            "success": "Cash account deleted successfully",
+            "error": "Error deleting cashaccount"
+          },
+          "list": {
+            "success": "Cash accounts fetched successfully",
+            "error": "Error fetching cashaccounts"
+          }
+        },
+        "category": {
+          "create": {
+            "success": "Category created successfully",
+            "error": "Error creating category"
+          },
+          "read": {
+            "success": "Category fetched successfully",
+            "error": "Error fetching category"
+          },
+          "update": {
+            "success": "Category updated successfully",
+            "error": "Error updating category"
+          },
+          "delete": {
+            "success": "Category deleted successfully",
+            "error": "Error deleting category"
+          },
+          "list": {
+            "success": "Categories fetched successfully",
+            "error": "Error fetching categories"
+          }
+        },
+        "company": {
+          "create": {
+            "success": "Company created successfully",
+            "error": "Error creating company"
+          },
+          "read": {
+            "success": "Company fetched successfully",
+            "error": "Error fetching company"
+          },
+          "update": {
+            "success": "Company updated successfully",
+            "error": "Error updating company"
+          },
+          "delete": {
+            "success": "Company deleted successfully",
+            "error": "Error deleting company"
+          },
+          "list": {
+            "success": "Companies fetched successfully",
+            "error": "Error fetching companies"
+          }
+        },
+        "customer": {
+          "create": {
+            "success": "Customer created successfully",
+            "error": "Error creating customer"
+          },
+          "read": {
+            "success": "Customer fetched successfully",
+            "error": "Error fetching customer"
+          },
+          "update": {
+            "success": "Customer updated successfully",
+            "error": "Error updating customer"
+          },
+          "delete": {
+            "success": "Customer deleted successfully",
+            "error": "Error deleting customer"
+          },
+          "list": {
+            "success": "Customers fetched successfully",
+            "error": "Error fetching customers"
+          }
+        },
+        "employee": {
+          "create": {
+            "success": "Employee created successfully",
+            "error": "Error creating employee"
+          },
+          "read": {
+            "success": "Employee fetched successfully",
+            "error": "Error fetching employee"
+          },
+          "update": {
+            "success": "Employee updated successfully",
+            "error": "Error updating employee"
+          },
+          "delete": {
+            "success": "Employee deleted successfully",
+            "error": "Error deleting employee"
+          },
+          "list": {
+            "success": "Employees fetched successfully",
+            "error": "Error fetching employees"
+          }
+        },
+        "transaction": {
+          "create": {
+            "success": "Financial transaction created successfully",
+            "error": "Error creating financial transaction"
+          },
+          "read": {
+            "success": "Financial transaction fetched successfully",
+            "error": "Error fetching financial transaction"
+          },
+          "update": {
+            "success": "Financial transaction updated successfully",
+            "error": "Error updating financial transaction"
+          },
+          "delete": {
+            "success": "Financial transaction deleted successfully",
+            "error": "Error deleting financial transaction"
+          },
+          "list": {
+            "success": "Financial transactions fetched successfully",
+            "error": "Error fetching financial transactions"
+          }
+        },
+        "gst": {
+          "create": {
+            "success": "Gst created successfully",
+            "error": "Error creating gst"
+          },
+          "read": {
+            "success": "Gst fetched successfully",
+            "error": "Error fetching gst"
+          },
+          "update": {
+            "success": "Gst updated successfully",
+            "error": "Error updating gst"
+          },
+          "delete": {
+            "success": "Gst deleted successfully",
+            "error": "Error deleting gst"
+          },
+          "list": {
+            "success": "Gsts fetched successfully",
+            "error": "Error fetching gsts"
+          }
+        },
+        "variation": {
+          "create": {
+            "success": "Item variation created successfully",
+            "error": "Error creating item variation"
+          },
+          "read": {
+            "success": "Item variation fetched successfully",
+            "error": "Error fetching item variation"
+          },
+          "update": {
+            "success": "Item variation updated successfully",
+            "error": "Error updating item variation"
+          },
+          "delete": {
+            "success": "Item variation deleted successfully",
+            "error": "Error deleting item variation"
+          },
+          "list": {
+            "success": "Item variations fetched successfully",
+            "error": "Error fetching item variations"
+          }
+        },
+        "item": {
+          "create": {
+            "success": "Item created successfully",
+            "error": "Error creating item"
+          },
+          "read": {
+            "success": "Item fetched successfully",
+            "error": "Error fetching item"
+          },
+          "update": {
+            "success": "Item updated successfully",
+            "error": "Error updating item"
+          },
+          "delete": {
+            "success": "Item deleted successfully",
+            "error": "Error deleting item"
+          },
+          "list": {
+            "success": "Items fetched successfully",
+            "error": "Error fetching items"
+          }
+        },
+        "return": {
+          "create": {
+            "success": "Return created successfully",
+            "error": "Error creating return"
+          },
+          "read": {
+            "success": "Return fetched successfully",
+            "error": "Error fetching return"
+          },
+          "update": {
+            "success": "Return updated successfully",
+            "error": "Error updating return"
+          },
+          "delete": {
+            "success": "Return deleted successfully",
+            "error": "Error deleting return"
+          },
+          "list": {
+            "success": "Returns fetched successfully",
+            "error": "Error fetching returns"
+          }
+        },
+        "role": {
+          "create": {
+            "success": "Role created successfully",
+            "error": "Error creating role"
+          },
+          "read": {
+            "success": "Role fetched successfully",
+            "error": "Error fetching role"
+          },
+          "update": {
+            "success": "Role updated successfully",
+            "error": "Error updating role"
+          },
+          "delete": {
+            "success": "Role deleted successfully",
+            "error": "Error deleting role"
+          },
+          "list": {
+            "success": "Roles fetched successfully",
+            "error": "Error fetching roles"
+          }
+        },
+        "sale": {
+          "create": {
+            "success": "Sale created successfully",
+            "error": "Error creating sale"
+          },
+          "read": {
+            "success": "Sale fetched successfully",
+            "error": "Error fetching sale"
+          },
+          "update": {
+            "success": "Sale updated successfully",
+            "error": "Error updating sale"
+          },
+          "delete": {
+            "success": "Sale deleted successfully",
+            "error": "Error deleting sale"
+          },
+          "list": {
+            "success": "Sales fetched successfully",
+            "error": "Error fetching sales"
+          }
+        },
+        "stock": {
+          "create": {
+            "success": "Stock register created successfully",
+            "error": "Error creating stock register"
+          },
+          "read": {
+            "success": "Stock register fetched successfully",
+            "error": "Error fetching stock register"
+          },
+          "update": {
+            "success": "Stock register updated successfully",
+            "error": "Error updating stock register"
+          },
+          "delete": {
+            "success": "Stock register deleted successfully",
+            "error": "Error deleting stock register"
+          },
+          "list": {
+            "success": "Stock registers fetched successfully",
+            "error": "Error fetching stock registers"
+          }
+        },
+        "uom": {
+          "create": {
+            "success": "Uom created successfully",
+            "error": "Error creating uom"
+          },
+          "read": {
+            "success": "Uom fetched successfully",
+            "error": "Error fetching uom"
+          },
+          "update": {
+            "success": "Uom updated successfully",
+            "error": "Error updating uom"
+          },
+          "delete": {
+            "success": "Uom deleted successfully",
+            "error": "Error deleting uom"
+          },
+          "list": {
+            "success": "Uoms fetched successfully",
+            "error": "Error fetching uoms"
+          }
+        },
+        "user": {
+          "create": {
+            "success": "User created successfully",
+            "error": "Error creating user"
+          },
+          "read": {
+            "success": "User fetched successfully",
+            "error": "Error fetching user"
+          },
+          "update": {
+            "success": "User updated successfully",
+            "error": "Error updating user"
+          },
+          "delete": {
+            "success": "User deleted successfully",
+            "error": "Error deleting user"
+          },
+          "list": {
+            "success": "Users fetched successfully",
+            "error": "Error fetching users"
+          }
+        },
+        "vendor": {
+          "create": {
+            "success": "Vendor created successfully",
+            "error": "Error creating vendor"
+          },
+          "read": {
+            "success": "Vendor fetched successfully",
+            "error": "Error fetching vendor"
+          },
+          "update": {
+            "success": "Vendor updated successfully",
+            "error": "Error updating vendor"
+          },
+          "delete": {
+            "success": "Vendor deleted successfully",
+            "error": "Error deleting vendor"
+          },
+          "list": {
+            "success": "Vendors fetched successfully",
+            "error": "Error fetching vendors"
+          }
+        }
+      }
+    }
+  },
+  "Provided phone is not registered yet.": "Provided phone is not registered yet.",
+  "ENUM_NOT_FOUND": "ENUM_NOT_FOUND",
+  "INVALID_PATH": "INVALID_PATH",
+  "Incorrect otp. Please try again.": "Incorrect otp. Please try again."
+}

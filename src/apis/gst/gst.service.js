@@ -1,4 +1,4 @@
-const { Gst, Item } = require("./../../../models");
+const { GST, Item } = require("./../../../models");
 const {
   sendServiceData,
   sendServiceMessage,
@@ -16,6 +16,24 @@ module.exports = {
 
       // Ensure rates sum up correctly if applicable
       const { gst_rate, cgst_rate, sgst_rate, igst_rate } = body;
+
+      // Validate Exisitng Gst Rates
+      const existingGst = await GST.findOne({
+        where: {
+          gst_rate: gst_rate,
+          cgst_rate: cgst_rate || 0.0,
+          sgst_rate: sgst_rate || 0.0,
+          igst_rate: igst_rate || 0.0,
+        },
+      });
+
+      if (existingGst) {
+        return sendServiceMessage("messages.apis.app.gst.create.exists");
+      }
+
+      if (!gst_rate || !((cgst_rate && sgst_rate) || igst_rate)) {
+        return sendServiceMessage("messages.apis.app.gst.create.invalid_body");
+      }
       if (
         gst_rate &&
         (cgst_rate || sgst_rate) &&
@@ -32,7 +50,7 @@ module.exports = {
       }
 
       // Create Gst record
-      const gst = await Gst.create({
+      const gst = await GST.create({
         gst_rate: gst_rate,
         cgst_rate: cgst_rate || 0.0,
         sgst_rate: sgst_rate || 0.0,
@@ -49,7 +67,7 @@ module.exports = {
   getGsts: async () => {
     try {
       // Retrieve all Gst rates
-      const gstRates = await Gst.findAll({
+      const gstRates = await GST.findAll({
         attributes: [
           "gst_id",
           "gst_rate",

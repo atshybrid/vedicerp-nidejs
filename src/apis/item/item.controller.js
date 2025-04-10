@@ -107,6 +107,7 @@ module.exports = {
   },
   searchItems: async (req, res) => {
     try {
+      console.log("Thy name ius", req.query.name);
       const result = await service.searchItems(req);
       if (result.error) {
         return responses.badRequestResponse(res, result.message);

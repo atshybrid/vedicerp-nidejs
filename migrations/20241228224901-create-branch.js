@@ -32,7 +32,7 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
-      compay_id: {
+      company_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {

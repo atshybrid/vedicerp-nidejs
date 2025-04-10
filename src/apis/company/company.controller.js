@@ -87,7 +87,7 @@ module.exports = {
   },
   listCompanys: async (req, res) => {
     try {
-      const result = await service.getCompanys(req);
+      const result = await service.getCompanies(req);
       if (result.error) {
         return responses.badRequestResponse(res, result.message);
       }
@@ -102,6 +102,69 @@ module.exports = {
       return responses.internalFailureResponse(
         res,
         getText("messages.apis.app.company.list.error ")
+      );
+    }
+  },
+
+  addBankAccount: async (req, res) => {
+    try {
+      const result = await service.addBankAccount(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.bank_account.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - addBankAccount: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.bank_account.create.error")
+      );
+    }
+  },
+
+  updateBankAccount: async (req, res) => {
+    try {
+      const result = await service.updateBankAccount(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.bank_account.update.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - updatebankAccount: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.bank_account.update.error")
+      );
+    }
+  },
+
+  createCompanyExpense: async (req, res) => {
+    try {
+      const result = await service.createCompanyExpense(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.expenses.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createCompanyExpense: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.expenses.create.error")
       );
     }
   },

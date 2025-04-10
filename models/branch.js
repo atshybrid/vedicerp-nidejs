@@ -1,6 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
-const { CashAccount } = require("./../models");
+const { CashAccount } = require("./../models/cashaccount");
 
 module.exports = (sequelize, DataTypes) => {
   class Branch extends Model {
@@ -27,11 +27,6 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         allowNull: false,
       },
-      branch_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        unique: true,
-      },
       branch_name: {
         type: DataTypes.STRING(255),
         allowNull: false,
@@ -57,6 +52,12 @@ module.exports = (sequelize, DataTypes) => {
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        onDelete: "CASCADE",
+      },
+      invoice_prefix: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: "INV",
       },
     },
     {
@@ -70,8 +71,14 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Branch.afterCreate(async (branch, options) => {
+    const { CashAccount } = sequelize.models;
     await CashAccount.create({
-      branch_id: branch.branch_id,
+      branch_id: branch.id,
+      balance: 0.0,
+    });
+
+    await BranchPettyCashAccount.create({
+      branch_id: branch.id,
       balance: 0.0,
     });
   });

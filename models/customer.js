@@ -38,7 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       gst_number: {
         type: DataTypes.STRING(15),
         allowNull: true,
-        unique: true,
       },
       contact_person: {
         type: DataTypes.STRING(255),
@@ -47,7 +46,6 @@ module.exports = (sequelize, DataTypes) => {
       phone_number: {
         type: DataTypes.STRING(15),
         allowNull: false,
-        unique: true,
         validate: {
           notEmpty: {
             msg: "Phone number cannot be empty",
@@ -58,7 +56,6 @@ module.exports = (sequelize, DataTypes) => {
       email: {
         type: DataTypes.STRING(255),
         allowNull: true,
-        unique: true,
         validate: {
           isEmail: {
             msg: "Must be a valid email address",
@@ -91,6 +88,11 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      balance: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.0, // Allows positive and negative balances
+      },
     },
     {
       sequelize,
@@ -99,6 +101,20 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["phone_number"],
+        },
+        {
+          unique: true,
+          fields: ["email"],
+        },
+        {
+          unique: true,
+          fields: ["gst_number"],
+        },
+      ],
     }
   );
 

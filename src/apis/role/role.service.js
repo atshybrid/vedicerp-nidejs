@@ -14,6 +14,8 @@ module.exports = {
         return sendServiceMessage("messages.apis.app.role.create.invalid_body");
       }
 
+      body.role_name = body.role_name.toUpperCase();
+
       // Ensure role_name is unique
       const existingRole = await Role.findOne({
         where: { role_name: body.role_name },
@@ -72,7 +74,9 @@ module.exports = {
   updateRole: async ({ params, body }) => {
     try {
       // Validate body
-      if (!body) {
+
+      if (!body.role_name && !body.description) {
+        console.log("body", body);
         return sendServiceMessage("messages.apis.app.role.update.invalid_body");
       }
 
@@ -80,18 +84,6 @@ module.exports = {
       const role = await Role.findByPk(params.role_id);
       if (!role) {
         return sendServiceMessage("messages.apis.app.role.update.not_found");
-      }
-
-      // Check for duplicate role_name if updating
-      if (body.role_name && body.role_name !== role.role_name) {
-        const existingRole = await Role.findOne({
-          where: { role_name: body.role_name },
-        });
-        if (existingRole) {
-          return sendServiceMessage(
-            "messages.apis.app.role.update.duplicate_role"
-          );
-        }
       }
 
       // Update the role

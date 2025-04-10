@@ -39,10 +39,12 @@ module.exports = (sequelize, DataTypes) => {
       branch_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       customer_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       return_date: {
         type: DataTypes.DATE,

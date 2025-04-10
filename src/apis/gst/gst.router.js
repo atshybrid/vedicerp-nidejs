@@ -1,14 +1,23 @@
 const Router = require("express").Router;
 const controller = require("./gst.controller");
 
+const {
+  validateAdmin,
+  validateUser,
+} = require("../../../middlewares/authorization");
+
 const router = Router({ mergeParams: true });
 
-router.get("/", controller.listGsts);
-router.get("/:gst_id", controller.getGst);
-router.post("/", controller.createGst);
-router.post("/archive", controller.archiveOldGSTRates);
-router.put("/:gst_id", controller.updateGst);
-router.put("/:gst_id/items/apply", controller.applyGSTToMultipleItems);
-router.delete("/:gst_id", controller.deleteGst);
+router.get("/", validateUser, controller.listGsts);
+router.get("/:gst_id", validateUser, controller.getGst);
+router.post("/", validateAdmin, controller.createGst);
+router.post("/archive", validateAdmin, controller.archiveOldGSTRates);
+router.put("/:gst_id", validateAdmin, controller.updateGst);
+router.put(
+  "/:gst_id/items/apply",
+  validateAdmin,
+  controller.applyGSTToMultipleItems
+);
+router.delete("/:gst_id", validateAdmin, controller.deleteGst);
 
 module.exports = router;

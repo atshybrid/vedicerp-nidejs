@@ -9,5 +9,6 @@ const getServiceResult = (error = false, data = null, message = "") => ({
 module.exports = {
   sendServiceData: (data) => getServiceResult(false, data),
   sendServiceError: (error) => getServiceResult(true, null, error),
-  sendServiceMessage: (text) => getServiceResult(true, null, getText(text)),
+  sendServiceMessage: (text, data = null) =>
+    getServiceResult(true, data, getText(text)),
 };

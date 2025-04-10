@@ -10,9 +10,26 @@ module.exports = {
   createVariation: async ({ body }) => {
     try {
       // Validate body
-      if (!body.item_id || !body.variation_name || !body.mrp || !body.stock) {
+      if (
+        !body.item_id ||
+        !body.variation_name ||
+        !body.mrp ||
+        !body.barcode ||
+        !body.sku
+      ) {
         return sendServiceMessage(
           "messages.apis.app.variation.create.invalid_body"
+        );
+      }
+
+      // Check if variation name is unique
+      const existingVariation = await ItemVariation.findOne({
+        where: { variation_name: body.variation_name, item_id: body.item_id },
+      });
+
+      if (existingVariation) {
+        return sendServiceMessage(
+          "messages.apis.app.variation.create.duplicate_variation"
         );
       }
 
@@ -55,6 +72,8 @@ module.exports = {
         stock: body.stock,
         barcode: body.barcode || null,
         sku: body.sku || null,
+        discount: body.discount || 0,
+        image: body.image || null,
       });
 
       return sendServiceData(itemVariation);
@@ -74,10 +93,11 @@ module.exports = {
           "variation_id",
           "variation_name",
           "mrp",
-          "stock",
           "barcode",
+          "discount",
           "sku",
           "item_id",
+          "image",
         ],
       });
 
@@ -97,10 +117,11 @@ module.exports = {
           "variation_id",
           "variation_name",
           "mrp",
-          "stock",
           "barcode",
+          "discount",
           "sku",
           "item_id",
+          "image",
         ],
       });
 
@@ -112,6 +133,31 @@ module.exports = {
     } catch (error) {
       console.error(`${TAG} - getVariation: `, error);
       return sendServiceMessage("messages.apis.app.variation.read.error");
+    }
+  },
+
+  searchVariations: async ({ query }) => {
+    try {
+      // Search for variations by name
+      const itemVariations = await ItemVariation.findAll({
+        where: { variation_name: { [Op.like]: `%${query.variation_name}%` } },
+        include: [{ model: Item, as: "item", attributes: ["item_name"] }],
+        attributes: [
+          "variation_id",
+          "variation_name",
+          "mrp",
+          "barcode",
+          "discount",
+          "sku",
+          "item_id",
+          "image",
+        ],
+      });
+
+      return sendServiceData(itemVariations);
+    } catch (error) {
+      console.error(`${TAG} - searchVariations: `, error);
+      return sendServiceMessage("messages.apis.app.variation.search.error");
     }
   },
 
@@ -173,6 +219,8 @@ module.exports = {
         stock: body.stock || variation.stock,
         barcode: body.barcode || variation.barcode,
         sku: body.sku || variation.sku,
+        discount: body.discount || variation.discount,
+        image: body.image || variation.image,
       });
 
       return sendServiceData(updatedItemVariation);

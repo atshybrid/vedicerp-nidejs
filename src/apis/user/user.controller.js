@@ -165,4 +165,25 @@ module.exports = {
       );
     }
   },
+
+  uploadImage: async (req, res) => {
+    try {
+      const result = await service.uploadImage(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.user.upload_image.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - uploadImage: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.user.upload_image.error ")
+      );
+    }
+  },
 };

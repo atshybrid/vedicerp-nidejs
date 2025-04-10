@@ -21,6 +21,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "branch_id",
         as: "branch",
       });
+
+      // Association with Companies
+      this.belongsTo(models.Company, {
+        foreignKey: "company_id",
+        as: "company",
+      });
     }
   }
 
@@ -42,17 +48,43 @@ module.exports = (sequelize, DataTypes) => {
       },
       branch_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
+      },
+      company_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
       transaction_type: {
-        type: DataTypes.STRING(50),
+        type: DataTypes.ENUM("SALE", "PURCHASE", "TRANSFER", "ADJUSTMENT"),
         allowNull: false,
         validate: {
-          notEmpty: {
-            msg: "Transaction type cannot be empty",
+          isIn: {
+            args: [["SALE", "PURCHASE", "TRANSFER", "ADJUSTMENT"]],
+            msg: "Transaction type must be one of 'SALE', 'PURCHASE', 'TRANSFER', or 'ADJUSTMENT'",
           },
         },
       },
+      flow_type: {
+        type: DataTypes.ENUM("IN", "OUT"),
+        allowNull: false,
+        validate: {
+          isIn: {
+            args: [["IN", "OUT"]],
+            msg: "Flow type must be either 'IN' or 'OUT'",
+          },
+        },
+      },
+      rate: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        validate: {
+          min: {
+            args: [0],
+            msg: "Rate cannot be negative",
+          },
+        },
+      },
+
       quantity: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -63,6 +95,20 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      loss_quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        validate: {
+          min: {
+            args: [0],
+            msg: "Loss quantity cannot be negative",
+          },
+        },
+      },
+      sub_total: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
       gst_rate: {
         type: DataTypes.DECIMAL(5, 2),
         allowNull: true,
@@ -71,14 +117,21 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
+      grand_total: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
       reference_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      batch_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       transaction_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.BIGINT,
         allowNull: false,
-        defaultValue: DataTypes.NOW,
       },
       remarks: {
         type: DataTypes.TEXT,

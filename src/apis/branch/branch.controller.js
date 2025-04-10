@@ -87,7 +87,7 @@ module.exports = {
   },
   listBranches: async (req, res) => {
     try {
-      const result = await service.getBranchs(req);
+      const result = await service.getBranches(req);
       if (result.error) {
         return responses.badRequestResponse(res, result.message);
       }
@@ -142,6 +142,138 @@ module.exports = {
       return responses.internalFailureResponse(
         res,
         getText("messages.apis.app.branch.list.error ")
+      );
+    }
+  },
+
+  createExpense: async (req, res) => {
+    try {
+      const result = await service.createExpense(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.expenses.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createExpense: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.expenses.create.error ")
+      );
+    }
+  },
+
+  updateExpenseStatus: async (req, res) => {
+    try {
+      const result = await service.updateExpenseStatus(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText(
+          `messages.apis.app.branch.expenses.update_status.${
+            result.data.status === "APPROVED"
+              ? "success_approved"
+              : "success_rejected"
+          }`
+        )
+      );
+    } catch (error) {
+      console.error(`${TAG} - updateExpenseStatus: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.expenses.update_status.error ")
+      );
+    }
+  },
+
+  listExpenses: async (req, res) => {
+    try {
+      const result = await service.listExpenses(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.expenses.list.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - listExpenses: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.expenses.list.error ")
+      );
+    }
+  },
+
+  getExpense: async (req, res) => {
+    try {
+      const result = await service.getExpense(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.expenses.read.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getExpense: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.expenses.read.error ")
+      );
+    }
+  },
+
+  addBalanceToPettyCash: async (req, res) => {
+    try {
+      const result = await service.addBalanceToPettyCash(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.expenses.add_balance.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - addBalanceToPettyCash: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.pettycash.add_balance.error ")
+      );
+    }
+  },
+
+  updateInvoicePrefix: async (req, res) => {
+    try {
+      const result = await service.updateInvoicePrefix(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - updateInvoicePrefix: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.create.error ")
       );
     }
   },

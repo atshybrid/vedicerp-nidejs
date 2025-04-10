@@ -1,4 +1,17 @@
-const { Branch, Employee, Company } = require("./../../../models");
+const {
+  Branch,
+  Employee,
+  User,
+  Company,
+  Expense,
+  BranchPettyCashAccount,
+  FinancialTransaction,
+  BankAccount,
+} = require("./../../../models");
+
+const sequelize = require("sequelize");
+
+const moment = require("moment-timezone");
 const {
   sendServiceData,
   sendServiceMessage,
@@ -16,6 +29,17 @@ module.exports = {
         );
       }
 
+      // Check if branch name already exists
+      const branchExists = await Branch.findOne({
+        where: { branch_name: body.branch_name },
+      });
+
+      if (branchExists) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.create.branch_exists"
+        );
+      }
+
       // Validate foreign keys
       if (body.manager_id) {
         const managerExists = await Employee.findByPk(body.manager_id);
@@ -26,8 +50,8 @@ module.exports = {
         }
       }
 
-      if (body.compay_id) {
-        const companyExists = await Company.findByPk(body.compay_id);
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
         if (!companyExists) {
           return sendServiceMessage(
             "messages.apis.app.branch.create.invalid_company"
@@ -39,8 +63,8 @@ module.exports = {
       const branch = await Branch.create({
         branch_name: body.branch_name,
         location: body.location,
-        manager_id: body.manager_id || null,
-        compay_id: body.compay_id || null,
+        manager_id: body?.manager_id || null,
+        company_id: body?.company_id || null,
       });
 
       return sendServiceData(branch);
@@ -52,22 +76,48 @@ module.exports = {
 
   getBranches: async () => {
     try {
-      // Retrieve all branches with related manager and company details
+      // Retrieve all branches with related manager (via User) and company details
       const branches = await Branch.findAll({
         include: [
-          { model: Employee, as: "manager", attributes: ["name"] },
-          { model: Company, as: "company", attributes: ["company_name"] },
+          {
+            model: Employee,
+            as: "manager",
+            attributes: ["employee_id", "user_id"], // Include fields needed to join with User
+            required: false, // Allows branches without managers
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["name"], // Fetch name from the User table
+              },
+            ],
+          },
+          {
+            model: Company,
+            as: "company",
+            attributes: ["company_id", "company_name"],
+          },
         ],
         attributes: [
-          "branch_id",
           "branch_name",
+          "id",
           "location",
           "manager_id",
-          "compay_id",
+          "company_id",
         ],
       });
 
-      return sendServiceData(branches);
+      // Process branches to handle `manager_id` being null
+      const processedBranches = branches.map((branch) => {
+        return {
+          ...branch.toJSON(),
+          manager: branch.manager
+            ? branch.manager.user?.name || "No name available" // Default message if User is missing
+            : "No manager assigned", // Default message if manager is missing
+        };
+      });
+
+      return sendServiceData(processedBranches);
     } catch (error) {
       console.error(`${TAG} - getBranches: `, error);
       return sendServiceMessage("messages.apis.app.branch.read.error");
@@ -79,23 +129,40 @@ module.exports = {
       // Retrieve a single branch by ID
       const branch = await Branch.findByPk(params.branch_id, {
         include: [
-          { model: Employee, as: "manager", attributes: ["name"] },
-          { model: Company, as: "company", attributes: ["company_name"] },
+          {
+            model: Employee,
+            as: "manager",
+            attributes: ["employee_id", "user_id"], // Include fields needed to join with User
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["name"], // Fetch name from the User table
+              },
+            ],
+          },
+          {
+            model: Company,
+            as: "company",
+            attributes: ["company_name"],
+          },
         ],
-        attributes: [
-          "branch_id",
-          "branch_name",
-          "location",
-          "manager_id",
-          "compay_id",
-        ],
+        attributes: ["branch_name", "location", "manager_id", "company_id"],
       });
 
       if (!branch) {
         return sendServiceMessage("messages.apis.app.branch.read.not_found");
       }
 
-      return sendServiceData(branch);
+      // Process branch data to handle `manager` or `user` being null
+      const processedBranch = {
+        ...branch.toJSON(),
+        manager: branch.manager
+          ? branch.manager.user?.name || "No name available" // Default message if User is missing
+          : "No manager assigned", // Default message if manager is missing
+      };
+
+      return sendServiceData(processedBranch);
     } catch (error) {
       console.error(`${TAG} - getBranch: `, error);
       return sendServiceMessage("messages.apis.app.branch.read.error");
@@ -127,8 +194,8 @@ module.exports = {
         }
       }
 
-      if (body.compay_id) {
-        const companyExists = await Company.findByPk(body.compay_id);
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
         if (!companyExists) {
           return sendServiceMessage(
             "messages.apis.app.branch.update.invalid_company"
@@ -141,7 +208,7 @@ module.exports = {
         branch_name: body.branch_name || branch.branch_name,
         location: body.location || branch.location,
         manager_id: body.manager_id || branch.manager_id,
-        compay_id: body.compay_id || branch.compay_id,
+        company_id: body.company_id || branch.company_id,
       });
 
       return sendServiceData(updatedBranch);
@@ -174,7 +241,7 @@ module.exports = {
       // Retrieve branches managed by a specific employee
       const branches = await Branch.findAll({
         where: { manager_id: params.manager_id },
-        attributes: ["branch_id", "branch_name", "location", "compay_id"],
+        attributes: ["id", "branch_name", "location", "company_id"],
         include: [
           { model: Company, as: "company", attributes: ["company_name"] },
         ],
@@ -191,11 +258,12 @@ module.exports = {
 
   getBranchesByCompany: async ({ params }) => {
     try {
+      console.log("params", params.company_id);
       // Retrieve branches for a specific company
       const branches = await Branch.findAll({
-        where: { compay_id: params.compay_id },
-        attributes: ["branch_id", "branch_name", "location", "manager_id"],
-        include: [{ model: Employee, as: "manager", attributes: ["name"] }],
+        where: { company_id: params.company_id },
+        attributes: ["id", "branch_name", "location", "manager_id"],
+        include: [{ model: Employee, as: "manager" }],
       });
 
       return sendServiceData(branches);
@@ -203,6 +271,504 @@ module.exports = {
       console.error(`${TAG} - getBranchesByCompany: `, error);
       return sendServiceMessage(
         "messages.apis.app.branch.read.by_company_error"
+      );
+    }
+  },
+
+  createExpense: async ({ body }) => {
+    try {
+      const { branch_id, amount, expense_date, type, remarks, recorded_by } =
+        body;
+
+      // Validate input
+      if (!branch_id || !amount || !expense_date || !type || !recorded_by) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.invalid_body"
+        );
+      }
+
+      if (amount <= 0) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.invalid_amount"
+        );
+      }
+
+      // Validate Branch
+      const branch = await Branch.findByPk(branch_id);
+      if (!branch) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.invalid_branch"
+        );
+      }
+
+      // Validate Employee (who is recording the expense)
+      const employee = await Employee.findByPk(recorded_by);
+      if (!employee) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.invalid_employee"
+        );
+      }
+
+      // Validate Petty Cash Account
+      const pettyCashAccount = await BranchPettyCashAccount.findOne({
+        where: { branch_id },
+      });
+
+      if (!pettyCashAccount || pettyCashAccount.balance < amount) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.insufficient_funds"
+        );
+      }
+
+      // Fetch total pending expenses for the branch
+      const pendingExpenses = await Expense.findAll({
+        where: { branch_id, status: "PENDING" },
+        attributes: [
+          [sequelize.fn("SUM", sequelize.col("amount")), "total_pending"],
+        ],
+        raw: true,
+      });
+
+      const totalPending = parseFloat(pendingExpenses[0]?.total_pending) || 0;
+      const availableBalance = parseFloat(pettyCashAccount.balance);
+
+      // Check if new expense exceeds available balance
+      if (totalPending + parseFloat(amount) > availableBalance) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.create.insufficient_funds"
+        );
+      }
+
+      // Create Expense Record
+      const expense = await Expense.create({
+        branch_id,
+        amount,
+        type,
+        remarks: remarks || null,
+        status: "PENDING",
+        recorded_by,
+        expense_date,
+      });
+
+      return sendServiceData(expense);
+    } catch (error) {
+      console.error(`${TAG} - createExpense: `, error);
+      return sendServiceMessage(
+        "messages.apis.app.branch.expenses.create.error"
+      );
+    }
+  },
+
+  updateExpenseStatus: async (req) => {
+    try {
+      const { expense_id, payment_method, status } = req.body;
+      const { user_id: admin_id } = req.user;
+
+      // Validate input
+      if (!expense_id || !status || !admin_id) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.update_status.invalid_body"
+        );
+      }
+
+      if (!["APPROVED", "REJECTED"].includes(status)) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.update_status.invalid_status"
+        );
+      }
+
+      // Fetch expense entry
+      const expense = await Expense.findByPk(expense_id, {
+        include: [
+          {
+            model: Branch,
+            as: "branch",
+            attributes: ["id", "branch_name"],
+          },
+          {
+            model: Company,
+            as: "company",
+            attributes: ["company_id", "company_name"],
+          },
+          {
+            model: BankAccount,
+            as: "bank_account",
+            attributes: ["bank_account_id", "balance"],
+          },
+        ],
+      });
+
+      if (!expense) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.update_status.invalid_expense"
+        );
+      }
+
+      if (expense.status !== "PENDING") {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.update_status.already_processed"
+        );
+      }
+
+      if (status === "REJECTED") {
+        // Update status and exit
+        await expense.update({ status: "REJECTED" });
+        return sendServiceData({ expense_id, status: "REJECTED" });
+      }
+
+      // If Approved, continue processing
+      const { branch_id, company_id, bank_account_id, amount, expense_date } =
+        expense;
+
+      let updatedBalance = 0;
+      let financialTransaction = null;
+
+      if (branch_id) {
+        // Branch Expense - Deduct from Petty Cash
+        const pettyCashAccount = await BranchPettyCashAccount.findOne({
+          where: { branch_id },
+        });
+
+        if (!pettyCashAccount) {
+          return sendServiceMessage(
+            "messages.apis.app.branch.expenses.update_status.no_petty_cash_account"
+          );
+        }
+
+        if (parseFloat(pettyCashAccount.balance) < parseFloat(amount)) {
+          return sendServiceMessage(
+            "messages.apis.app.branch.expenses.update_status.insufficient_funds"
+          );
+        }
+
+        // Create financial transaction entry
+        financialTransaction = await FinancialTransaction.create({
+          transaction_type: "EXPENSE",
+          amount,
+          transaction_date: expense_date,
+          payment_method,
+          reference_number: expense_id,
+          employee_id: admin_id,
+          branch_id,
+          description: `Branch Expense: ${expense.type} - ${
+            expense.remarks || "No remarks"
+          }`,
+        });
+
+        // Deduct from petty cash
+        updatedBalance =
+          parseFloat(pettyCashAccount.balance) - parseFloat(amount);
+        await pettyCashAccount.update({ balance: updatedBalance });
+      } else if (company_id && bank_account_id) {
+        // Company Expense - Deduct from Bank Account
+        const bankAccount = await BankAccount.findOne({
+          bank_account_id,
+          company_id,
+        });
+
+        if (!bankAccount) {
+          return sendServiceMessage(
+            "messages.apis.app.branch.expenses.update_status.no_bank_account"
+          );
+        }
+
+        if (parseFloat(bankAccount.balance) < parseFloat(amount)) {
+          return sendServiceMessage(
+            "messages.apis.app.branch.expenses.update_status.insufficient_funds"
+          );
+        }
+
+        // Create financial transaction entry
+        financialTransaction = await FinancialTransaction.create({
+          transaction_type: "EXPENSE",
+          amount,
+          transaction_date: expense_date,
+          payment_method,
+          reference_number: expense_id,
+          employee_id: admin_id,
+          company_id,
+          bank_account_id,
+          description: `Company Expense: ${expense.type} - ${
+            expense.remarks || "No remarks"
+          }`,
+        });
+
+        // Deduct from Bank Account
+        updatedBalance = parseFloat(bankAccount.balance) - parseFloat(amount);
+        await bankAccount.update({ balance: updatedBalance });
+      } else {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.update_status.invalid_expense_type"
+        );
+      }
+
+      // Update expense status to Approved
+      await expense.update({ status: "APPROVED" });
+
+      return sendServiceData({
+        status: "APPROVED",
+        expense_id,
+        financial_transaction_id: financialTransaction.transaction_id,
+        new_balance: updatedBalance.toFixed(2),
+      });
+    } catch (error) {
+      console.error(`${TAG} - updateExpenseStatus: `, error);
+      return sendServiceMessage(
+        "messages.apis.app.branch.expenses.update_status.error"
+      );
+    }
+  },
+
+  listExpenses: async ({ query }) => {
+    try {
+      const { branch: branch_id, status, fromDate, toDate } = query;
+
+      // Build filter conditions
+      const filter = {};
+
+      if (branch_id) {
+        filter.branch_id = branch_id;
+      }
+
+      if (status) {
+        filter.status = status;
+      }
+
+      if (fromDate && toDate) {
+        const fromTimestamp = moment
+          .tz(fromDate, "Asia/Kolkata")
+          .startOf("day")
+          .valueOf();
+        const toTimestamp = moment
+          .tz(toDate, "Asia/Kolkata")
+          .endOf("day")
+          .valueOf();
+
+        filter.expense_date = {
+          [Op.between]: [fromTimestamp, toTimestamp],
+        };
+      }
+
+      // Fetch expenses
+      const expenses = await Expense.findAll({
+        where: filter,
+        include: [
+          {
+            model: Branch,
+            as: "branch",
+            attributes: ["id", "branch_name", "location"],
+          },
+          {
+            model: Employee,
+            as: "employee",
+            attributes: ["employee_id"],
+          },
+        ],
+        attributes: [
+          "expense_id",
+          "branch_id",
+          "amount",
+          "type",
+          "remarks",
+          "status",
+          "recorded_by",
+          "expense_date",
+          "created_at",
+        ],
+        order: [["expense_date", "DESC"]],
+      });
+
+      if (!expenses.length) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.list.no_expenses"
+        );
+      }
+
+      return sendServiceData(expenses);
+    } catch (error) {
+      console.error(`${TAG} - listExpenses: `, error);
+      return sendServiceMessage("messages.apis.app.branch.expenses.list.error");
+    }
+  },
+
+  getExpense: async ({ params }) => {
+    try {
+      const expense = await Expense.findByPk(params.expense_id, {
+        include: [
+          {
+            model: Branch,
+            as: "branch",
+            attributes: ["id", "branch_name", "location"],
+          },
+          {
+            model: Employee,
+            as: "employee",
+            attributes: ["employee_id"],
+          },
+        ],
+        attributes: [
+          "expense_id",
+          "branch_id",
+          "amount",
+          "type",
+          "remarks",
+          "status",
+          "recorded_by",
+          "expense_date",
+          "created_at",
+        ],
+      });
+
+      if (!expense) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.read.not_found"
+        );
+      }
+
+      return sendServiceData(expense);
+    } catch (error) {
+      console.error(`${TAG} - getExpense: `, error);
+      return sendServiceMessage("messages.apis.app.branch.expenses.read.error");
+    }
+  },
+
+  addBalanceToPettyCash: async (req) => {
+    try {
+      const { branch_id, company_id, bank_account_id, timestamp, amount } =
+        req.body;
+
+      const { user_id: admin_id } = req.user;
+
+      console.log("Admin ID: ", admin_id);
+
+      // Validate input
+      if (
+        !branch_id ||
+        !company_id ||
+        !bank_account_id ||
+        !timestamp ||
+        !amount ||
+        !admin_id
+      ) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.invalid_body"
+        );
+      }
+
+      if (amount <= 0) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.invalid_amount"
+        );
+      }
+
+      // Validate Branch
+      const branch = await Branch.findByPk(branch_id);
+      if (!branch) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.invalid_branch"
+        );
+      }
+
+      // Validate Company
+      const company = await Company.findByPk(company_id);
+      if (!company) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.invalid_company"
+        );
+      }
+
+      // Validate Bank Account
+      const bankAccount = await BankAccount.findByPk(bank_account_id);
+      if (!bankAccount || bankAccount.company_id !== company_id) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.invalid_bank_account"
+        );
+      }
+
+      if (parseFloat(bankAccount.balance) < parseFloat(amount)) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.insufficient_funds"
+        );
+      }
+
+      // Validate Petty Cash Account
+      let pettyCashAccount = await BranchPettyCashAccount.findOne({
+        where: { branch_id },
+      });
+
+      if (!pettyCashAccount) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.expenses.add_balance.no_account"
+        );
+      }
+
+      // Deduct amount from Bank Account
+      const newBankBalance =
+        parseFloat(bankAccount.balance) - parseFloat(amount);
+      await bankAccount.update({ balance: newBankBalance.toFixed(2) });
+
+      // Add amount to Petty Cash
+      const newPettyCashBalance =
+        parseFloat(pettyCashAccount.balance) + parseFloat(amount);
+      await pettyCashAccount.update({
+        balance: newPettyCashBalance.toFixed(2),
+      });
+
+      // Create Financial Transaction Entry
+      const financialTransaction = await FinancialTransaction.create({
+        transaction_type: "INTERNAL_PETTY_CASH",
+        amount,
+        transaction_date: timestamp,
+        payment_method: "NETBANKING",
+        reference_number: `BANK_TO_PETTY_${bank_account_id}_${branch_id}`,
+        employee_id: admin_id,
+        company_id,
+        branch_id,
+        bank_account_id: bank_account_id,
+        description: `Transferred ${amount} from Bank Account ID: ${bank_account_id} to Branch Petty Cash ID: ${pettyCashAccount.petty_cash_account_id}`,
+      });
+
+      return sendServiceData({
+        message: "Balance successfully added to Petty Cash",
+        new_petty_cash_balance: newPettyCashBalance.toFixed(2),
+        new_bank_balance: newBankBalance.toFixed(2),
+        financial_transaction_id: financialTransaction.transaction_id,
+      });
+    } catch (error) {
+      console.error(`${TAG} - addBalanceToPettyCash: `, error);
+      return sendServiceMessage(
+        "messages.apis.app.branch.expenses.add_balance.error"
+      );
+    }
+  },
+
+  updateInvoicePrefix: async ({ body }) => {
+    try {
+      const { branch_id, invoice_prefix } = body;
+
+      // Validate input
+      if (!branch_id || !invoice_prefix) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.create.invalid_body"
+        );
+      }
+
+      // Validate Branch
+      const branch = await Branch.findByPk(branch_id);
+      if (!branch) {
+        return sendServiceMessage(
+          "messages.apis.app.branch.create.invalid_branch"
+        );
+      }
+
+      // Update Invoice Prefix
+      await branch.update({ invoice_prefix });
+
+      return sendServiceData(branch);
+    } catch (error) {
+      console.error(`${TAG} - updateInvoicePrefix: `, error);
+      return sendServiceMessage(
+        "messages.apis.app.branch.invoice_prefix.error"
       );
     }
   },

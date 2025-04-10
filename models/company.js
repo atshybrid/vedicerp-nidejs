@@ -5,6 +5,12 @@ module.exports = (sequelize, DataTypes) => {
   class Company extends Model {
     static associate(models) {
       // Define associations here if needed
+
+      // Association with BankAccount
+      this.hasMany(models.BankAccount, {
+        foreignKey: "bank_account_id",
+        as: "bank_accounts",
+      });
     }
   }
 
@@ -19,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
       company_name: {
         type: DataTypes.STRING(255),
         allowNull: false,
+      },
+      logo_url: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
       },
       address_line1: {
         type: DataTypes.STRING(255),
@@ -63,6 +73,11 @@ module.exports = (sequelize, DataTypes) => {
       website: {
         type: DataTypes.STRING(255),
         allowNull: true,
+      },
+      bank_account_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
       },
       created_at: {
         type: DataTypes.DATE,

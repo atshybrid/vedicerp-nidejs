@@ -4,6 +4,10 @@ const {
   sendServiceMessage,
 } = require("./../../../utils/service.response");
 
+const { Op, sequelize } = require("sequelize");
+
+const axios = require("axios");
+
 const TAG = "customer.service.js";
 
 module.exports = {
@@ -22,14 +26,39 @@ module.exports = {
         contact_person,
       } = body;
 
-      // Validate uniqueness of gst_number and email
-      const existingCustomer = await Customer.findOne({
-        where: { [Op.or]: [{ gst_number }, { email }] },
-      });
+      // Validate required fields
+      if (!customer_name || !phone_number || !customer_type) {
+        return sendServiceMessage(
+          "messages.apis.app.customer.create.invalid_body"
+        );
+      }
 
+      // Validate uniqueness of gst_number and email
+      const whereClause = {
+        [Op.or]: [
+          ...(phone_number ? [{ phone_number }] : []),
+          ...(gst_number ? [{ gst_number }] : []),
+          ...(email ? [{ email }] : []),
+        ],
+      };
+
+      const existingCustomer = await Customer.findOne({
+        where: whereClause,
+      });
       if (existingCustomer) {
         return sendServiceMessage(
           "messages.apis.app.customer.create.duplicate"
+        );
+      }
+
+      // Validate GST if B2B
+      if (customer_type === "B2B" && !gst_number) {
+        return sendServiceMessage(
+          "messages.apis.app.customer.create.gst_error"
+        );
+      } else if (customer_type === "B2C" && gst_number) {
+        return sendServiceMessage(
+          "messages.apis.app.customer.create.gst_not_allowed"
         );
       }
 
@@ -53,6 +82,40 @@ module.exports = {
     }
   },
 
+  fetchGSTDetails: async ({ gstin_number }) => {
+    try {
+      if (!gstin_number) {
+        return sendServiceMessage(
+          "messages.apis.app.customer.gst.invalid_gstin"
+        );
+      }
+
+      const apiUrl = process.env.GST_API_URL;
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GST_BEARER_TOKEN}`,
+      };
+
+      const body = {
+        id_number: gstin_number,
+        filing_status_get: true,
+      };
+
+      // Make the API request
+      const response = await axios.post(apiUrl, body, { headers });
+
+      // Check if the response contains GST details
+      if (response.data && response.data.success) {
+        return sendServiceData(response.data.data);
+      } else {
+        return sendServiceMessage("messages.apis.app.customer.gst.no_data");
+      }
+    } catch (error) {
+      console.error(`${TAG} - fetchGSTDetails: `, error);
+      return sendServiceMessage("messages.apis.app.customer.gst.error");
+    }
+  },
+
   // Retrieve a Customer by ID
   getCustomer: async ({ params }) => {
     try {
@@ -70,15 +133,24 @@ module.exports = {
   },
 
   // List All Customers
-  getCustomers: async () => {
+  getCustomers: async ({ query: { phoneNo: mobile_number } }) => {
     try {
+      // Build filter condition
+      const filter = {};
+      if (mobile_number) {
+        filter.phone_number = mobile_number;
+      }
+
+      // Fetch customers based on filter
       const customers = await Customer.findAll({
+        where: filter,
         attributes: [
           "customer_id",
           "customer_name",
           "customer_type",
           "gst_number",
           "email",
+          "address",
           "phone_number",
           "credit_limit",
           "credit_period",
@@ -87,7 +159,7 @@ module.exports = {
 
       return sendServiceData(customers);
     } catch (error) {
-      console.error(`${TAG} - getAllCustomers: `, error);
+      console.error(`${TAG} - getCustomers: `, error);
       return sendServiceMessage("messages.apis.app.customer.read_all.error");
     }
   },

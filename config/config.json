@@ -1,22 +1,8 @@
 {
-  "dev": {
+  "development": {
     "username": "root",
-    "password": null,
+    "password": "Kamruddin@0204",
     "database": "vedic_erp_dev",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "test": {
-    "username": "root",
-    "password": null,
-    "database": "vedic_erp_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "prod": {
-    "username": "root",
-    "password": null,
-    "database": "vedic_erp_prod",
     "host": "127.0.0.1",
     "dialect": "mysql"
   }

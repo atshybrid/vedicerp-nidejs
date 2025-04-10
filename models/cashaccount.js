@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       branch_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       balance: {
         type: DataTypes.DECIMAL(10, 2),

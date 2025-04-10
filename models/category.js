@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       // Self-referencing associations
       this.hasMany(models.Category, {
         foreignKey: "parent_id",
-        as: "subcategories",
+        as: "sub_categories",
       });
 
       this.belongsTo(models.Category, {
@@ -28,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
       category_name: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true,
         validate: {
           notEmpty: {
             msg: "Category name cannot be empty",
@@ -39,7 +38,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
+
     {
       sequelize,
       modelName: "Category",
@@ -47,6 +51,12 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["category_name"], // Explicitly define the unique index
+        },
+      ],
     }
   );
 

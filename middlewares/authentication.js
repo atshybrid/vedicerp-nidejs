@@ -31,10 +31,13 @@ const checkToken = (req, res, next) => {
     //   `${TAG}.checkToken: req.headers.authorization: ${req.headers.authorization}`
     // );
     const token = req.headers.authorization.split(" ")[1];
-    const data = jwt.verify(token, process.env.SECRET_KEY);
+    const data = jwt.verify(token, process.env.JWT_SECRET);
     // console.log(`${TAG}.checkToken: data: ${JSON.stringify(data)}`);
     if (data) {
-      req.userId = data.id;
+      req.user_id = data.user_id;
+      req.branch_id = data?.branch_id;
+      req.company_id = data?.company_id;
+      req.employee_id = data?.employee_id;
       next();
     } else {
       return res.status(401).json({

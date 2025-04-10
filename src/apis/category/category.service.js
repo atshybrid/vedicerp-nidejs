@@ -33,6 +33,7 @@ module.exports = {
       const category = await Category.create({
         category_name: body.category_name,
         parent_id: body.parent_id || null, // Set as NULL for top-level categories
+        image: body.image || null,
       });
 
       return sendServiceData(category);
@@ -44,18 +45,27 @@ module.exports = {
 
   getCategories: async () => {
     try {
-      // Retrieve all categories
-      const categories = await Category.findAll({
+      // Retrieve top-level categories (parent_id is NULL)
+      const topCategories = await Category.findAll({
+        where: { parent_id: null },
         attributes: [
           "category_id",
           "category_name",
           "parent_id",
           "created_at",
           "updated_at",
+          "image",
+        ],
+        include: [
+          {
+            model: Category,
+            as: "sub_categories", // Alias for child categories
+            attributes: ["category_id", "category_name", "parent_id", "image"],
+          },
         ],
       });
 
-      return sendServiceData(categories);
+      return sendServiceData(topCategories);
     } catch (error) {
       console.error(`${TAG} - getCategories: `, error);
       return sendServiceMessage("messages.apis.app.category.read.error");
@@ -72,6 +82,7 @@ module.exports = {
           "parent_id",
           "created_at",
           "updated_at",
+          "image",
         ],
       });
 
@@ -123,6 +134,7 @@ module.exports = {
         category_name: body.category_name || category.category_name,
         parent_id:
           body.parent_id !== undefined ? body.parent_id : category.parent_id,
+        image: body.image || category.image,
       });
 
       return sendServiceData(updatedCategory);

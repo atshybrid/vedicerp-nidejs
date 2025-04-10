@@ -39,6 +39,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "handover_id",
         as: "handover",
       });
+
+      // Association with Employees
+      this.belongsTo(models.Employee, {
+        foreignKey: "employee_id",
+        as: "employee",
+      });
     }
   }
 
@@ -70,12 +76,11 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       transaction_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.BIGINT,
         allowNull: false,
-        defaultValue: DataTypes.NOW,
       },
       payment_method: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("CASH", "UPI", "CARD", "NETBANKING", "SPLIT"),
         allowNull: false,
         validate: {
           notEmpty: {
@@ -85,6 +90,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       reference_number: {
         type: DataTypes.STRING,
+        allowNull: true,
+      },
+      employee_id: {
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
       vendor_id: {
@@ -98,10 +107,12 @@ module.exports = (sequelize, DataTypes) => {
       branch_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        onDelete: "CASCADE",
       },
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        onDelete: "CASCADE",
       },
       bank_account_id: {
         type: DataTypes.INTEGER,

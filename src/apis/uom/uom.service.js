@@ -1,4 +1,4 @@
-const { Uom } = require("./../../../models");
+const { UOM } = require("./../../../models");
 const {
   sendServiceData,
   sendServiceMessage,
@@ -15,7 +15,7 @@ module.exports = {
       }
 
       // Ensure uom_name is unique
-      const existingUom = await Uom.findOne({
+      const existingUom = await UOM.findOne({
         where: { uom_name: body.uom_name.toUpperCase() },
       });
       if (existingUom) {
@@ -25,7 +25,7 @@ module.exports = {
       }
 
       // Create Uom
-      const uom = await Uom.create({
+      const uom = await UOM.create({
         uom_name: body.uom_name.toUpperCase(), // Ensure consistent casing (uppercase)
       });
 
@@ -39,7 +39,7 @@ module.exports = {
   getUoms: async () => {
     try {
       // Retrieve all Uoms
-      const uoms = await Uom.findAll({
+      const uoms = await UOM.findAll({
         attributes: ["uom_id", "uom_name", "created_at", "updated_at"],
       });
 
@@ -53,7 +53,7 @@ module.exports = {
   getUom: async ({ params }) => {
     try {
       // Retrieve a single Uom by ID
-      const uom = await Uom.findByPk(params.uom_id, {
+      const uom = await UOM.findByPk(params.uom_id, {
         attributes: ["uom_id", "uom_name", "created_at", "updated_at"],
       });
 
@@ -76,13 +76,13 @@ module.exports = {
       }
 
       // Find the Uom
-      const uom = await Uom.findByPk(params.uom_id);
+      const uom = await UOM.findByPk(params.uom_id);
       if (!uom) {
         return sendServiceMessage("messages.apis.app.uom.update.not_found");
       }
 
       // Check for duplicate Uom name
-      const existingUom = await Uom.findOne({
+      const existingUom = await UOM.findOne({
         where: {
           uom_name: body.uom_name.toUpperCase(),
           uom_id: { $ne: params.uom_id },
@@ -95,7 +95,7 @@ module.exports = {
       }
 
       // Update the Uom
-      const updatedUom = await uom.update({
+      const updatedUom = await UOM.update({
         uom_name: body.uom_name.toUpperCase(),
       });
 
@@ -109,7 +109,7 @@ module.exports = {
   deleteUom: async ({ params }) => {
     try {
       // Find the Uom
-      const uom = await Uom.findByPk(params.uom_id);
+      const uom = await UOM.findByPk(params.uom_id);
       if (!uom) {
         return sendServiceMessage("messages.apis.app.uom.delete.not_found");
       }

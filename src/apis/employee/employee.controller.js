@@ -45,6 +45,48 @@ module.exports = {
       );
     }
   },
+
+  getBillerAnalytics: async (req, res) => {
+    try {
+      const result = await service.getBillerAnalytics(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.analytics.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getBillerAnalytics: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.analytics.error ")
+      );
+    }
+  },
+
+  getManagerAnalytics: async (req, res) => {
+    try {
+      const result = await service.getManagerAnalytics(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.analytics.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getBillerAnalytics: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.analytics.error ")
+      );
+    }
+  },
+
   updateEmployee: async (req, res) => {
     try {
       const result = await service.updateEmployee(req);
@@ -102,6 +144,112 @@ module.exports = {
       return responses.internalFailureResponse(
         res,
         getText("messages.apis.app.employee.list.error ")
+      );
+    }
+  },
+  checkIn: async (req, res) => {
+    try {
+      const result = await service.checkIn(req);
+      if (result.error) {
+        return responses.badRequestResponse(
+          res,
+          result.message,
+          result?.data || null
+        );
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.checkIn.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - checkIn: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.checkIn.error ")
+      );
+    }
+  },
+  checkOut: async (req, res) => {
+    try {
+      const result = await service.checkOut(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.checkOut.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - checkOut: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.checkOut.error ")
+      );
+    }
+  },
+
+  checkInStatus: async (req, res) => {
+    try {
+      const result = await service.checkInStatus(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.checkInStatus.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - checkInStatus: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.checkInStatus.error ")
+      );
+    }
+  },
+
+  markAttendance: async (req, res) => {
+    try {
+      const result = await service.markAttendance(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.attendance.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - markAttendance: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.attendance.error ")
+      );
+    }
+  },
+  getAttendance: async (req, res) => {
+    try {
+      const result = await service.getAttendance(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.attendance.get.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getAttendance: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.attendance.get.error ")
       );
     }
   },

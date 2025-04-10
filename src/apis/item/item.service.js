@@ -1,4 +1,11 @@
-const { Item, Category, GST, UOM } = require("./../../../models");
+const {
+  Item,
+  Category,
+  GST,
+  UOM,
+  ItemVariation,
+} = require("./../../../models");
+const Op = require("sequelize").Op;
 const {
   sendServiceData,
   sendServiceMessage,
@@ -17,6 +24,22 @@ module.exports = {
         !body.uom_id
       ) {
         return sendServiceMessage("messages.apis.app.item.create.invalid_body");
+      }
+
+      // Check if item_name already exists
+      const itemExists = await Item.findOne({
+        where: {
+          item_name: body.item_name,
+          category_id: body.category_id,
+          gst_id: body.gst_id,
+          uom_id: body.uom_id,
+        },
+      });
+
+      if (itemExists) {
+        return sendServiceMessage(
+          "messages.apis.app.item.create.duplicate_item_name"
+        );
       }
 
       // Ensure category_id, gst_id, and uom_id exist
@@ -44,6 +67,7 @@ module.exports = {
         gst_id: body.gst_id,
         uom_id: body.uom_id,
         description: body.description || null,
+        image: body.image || null,
       });
 
       return sendServiceData(item);
@@ -53,14 +77,28 @@ module.exports = {
     }
   },
 
-  getItems: async () => {
+  getItems: async ({ query: { category_id } }) => {
     try {
       // Retrieve all items with their category, GST, and UOM details
       const items = await Item.findAll({
+        where: category_id ? { category_id } : {},
         include: [
           { model: Category, as: "category", attributes: ["category_name"] },
           { model: GST, as: "gst", attributes: ["gst_rate"] },
           { model: UOM, as: "uom", attributes: ["uom_name"] },
+          {
+            model: ItemVariation,
+            as: "variations",
+            attributes: [
+              "variation_id",
+              "variation_name",
+              "mrp",
+              "barcode",
+              "sku",
+              "discount",
+              "image",
+            ],
+          },
         ],
         attributes: [
           "item_id",
@@ -69,6 +107,7 @@ module.exports = {
           "category_id",
           "gst_id",
           "uom_id",
+          "image",
         ],
       });
 
@@ -87,6 +126,19 @@ module.exports = {
           { model: Category, as: "category", attributes: ["category_name"] },
           { model: GST, as: "gst", attributes: ["gst_rate"] },
           { model: UOM, as: "uom", attributes: ["uom_name"] },
+          {
+            model: ItemVariation,
+            as: "variations",
+            attributes: [
+              "variation_id",
+              "variation_name",
+              "mrp",
+              "barcode",
+              "sku",
+              "discount",
+              "image",
+            ],
+          },
         ],
         attributes: [
           "item_id",
@@ -95,11 +147,12 @@ module.exports = {
           "category_id",
           "gst_id",
           "uom_id",
+          "image",
         ],
       });
 
       if (!item) {
-        return sendServiceMessage("messages.apis.app.item.read.not_found");
+        return sendServiceMessage("messages.apis.app.item.read.id_not_found");
       }
 
       return sendServiceData(item);
@@ -157,6 +210,7 @@ module.exports = {
         gst_id: body.gst_id || item.gst_id,
         uom_id: body.uom_id || item.uom_id,
         description: body.description || item.description,
+        image: body.image || item.image,
       });
 
       return sendServiceData(updatedItem);
@@ -217,10 +271,10 @@ module.exports = {
 
       const items = await Item.findAll({
         where: {
-          ...(name && { item_name: { [Op.iLike]: `%${name}%` } }),
+          ...(name && { item_name: { [Op.like]: `%${name}%` } }),
           ...(category && { category_id: category }),
           ...(description && {
-            description: { [Op.iLike]: `%${description}%` },
+            description: { [Op.like]: `%${description}%` },
           }),
         },
       });

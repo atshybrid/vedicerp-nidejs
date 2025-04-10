@@ -23,7 +23,7 @@ router.use(
   require("./cashaccount/cashaccount.router")
 );
 router.use("/categories", checkToken, require("./category/category.router"));
-router.use("companies", checkToken, require("./company/company.router"));
+router.use("/companies", checkToken, require("./company/company.router"));
 router.use("/customers", checkToken, require("./customer/customer.router"));
 router.use("/employees", checkToken, require("./employee/employee.router"));
 router.use("/gst", checkToken, require("./gst/gst.router"));

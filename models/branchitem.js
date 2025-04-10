@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       branch_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       variation_id: {
         type: DataTypes.INTEGER,
@@ -45,13 +46,22 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      price: {
+      mrp: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         validate: {
           min: {
             args: [0],
-            msg: "Price must be a non-negative value",
+            msg: "MRP must be a non-negative value",
+          },
+        },
+      },
+      discount: {
+        type: DataTypes.DECIMAL(10, 2),
+        validate: {
+          min: {
+            args: [0],
+            msg: "MRP must be a non-negative value",
           },
         },
       },

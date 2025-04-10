@@ -21,6 +21,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "uom_id",
         as: "uom",
       });
+
+      // Association with ItemVariation
+      this.hasMany(models.ItemVariation, {
+        foreignKey: "item_id",
+        as: "variations",
+      });
     }
   }
 
@@ -35,16 +41,20 @@ module.exports = (sequelize, DataTypes) => {
       item_name: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
         validate: {
           notEmpty: {
             msg: "Item name cannot be empty",
           },
         },
       },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       category_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       gst_id: {
         type: DataTypes.INTEGER,
@@ -66,6 +76,12 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["item_name"],
+        },
+      ],
     }
   );
 

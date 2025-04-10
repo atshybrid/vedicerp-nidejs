@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       bank_name: {
         type: DataTypes.STRING(255),
@@ -36,7 +37,6 @@ module.exports = (sequelize, DataTypes) => {
       account_number: {
         type: DataTypes.STRING(50),
         allowNull: false,
-        unique: true,
         validate: {
           notEmpty: {
             msg: "Account number cannot be empty",
@@ -72,6 +72,12 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["account_number"], // Define a unique index on account_number
+        },
+      ],
     }
   );
 

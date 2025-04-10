@@ -26,8 +26,8 @@ module.exports = {
         }
       }
 
-      if (body.compay_id) {
-        const companyExists = await Company.findByPk(body.compay_id);
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
         if (!companyExists) {
           return sendServiceMessage(
             "messages.apis.app.branch.create.invalid_company"
@@ -40,7 +40,7 @@ module.exports = {
         branch_name: body.branch_name,
         location: body.location,
         manager_id: body.manager_id || null,
-        compay_id: body.compay_id || null,
+        company_id: body.company_id || null,
       });
 
       return sendServiceData(branch);
@@ -63,7 +63,7 @@ module.exports = {
           "branch_name",
           "location",
           "manager_id",
-          "compay_id",
+          "company_id",
         ],
       });
 
@@ -87,7 +87,7 @@ module.exports = {
           "branch_name",
           "location",
           "manager_id",
-          "compay_id",
+          "company_id",
         ],
       });
 
@@ -127,8 +127,8 @@ module.exports = {
         }
       }
 
-      if (body.compay_id) {
-        const companyExists = await Company.findByPk(body.compay_id);
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
         if (!companyExists) {
           return sendServiceMessage(
             "messages.apis.app.branch.update.invalid_company"
@@ -141,7 +141,7 @@ module.exports = {
         branch_name: body.branch_name || branch.branch_name,
         location: body.location || branch.location,
         manager_id: body.manager_id || branch.manager_id,
-        compay_id: body.compay_id || branch.compay_id,
+        company_id: body.company_id || branch.company_id,
       });
 
       return sendServiceData(updatedBranch);
@@ -174,7 +174,7 @@ module.exports = {
       // Retrieve branches managed by a specific employee
       const branches = await Branch.findAll({
         where: { manager_id: params.manager_id },
-        attributes: ["branch_id", "branch_name", "location", "compay_id"],
+        attributes: ["branch_id", "branch_name", "location", "company_id"],
         include: [
           { model: Company, as: "company", attributes: ["company_name"] },
         ],
@@ -193,7 +193,7 @@ module.exports = {
     try {
       // Retrieve branches for a specific company
       const branches = await Branch.findAll({
-        where: { compay_id: params.compay_id },
+        where: { company_id: params.company_id },
         attributes: ["branch_id", "branch_name", "location", "manager_id"],
         include: [{ model: Employee, as: "manager", attributes: ["name"] }],
       });

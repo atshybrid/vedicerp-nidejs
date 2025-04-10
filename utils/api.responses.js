@@ -32,8 +32,8 @@ const conflictResponse = (res, message) => {
   return generateResponse(res, false, message, 409);
 };
 
-const badRequestResponse = (res, message) => {
-  return generateResponse(res, false, message, 400);
+const badRequestResponse = (res, message, data = null) => {
+  return generateResponse(res, false, message, 400, data);
 };
 
 const comingSoonResponse = (req, res, next) => {

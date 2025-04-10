@@ -19,7 +19,6 @@ module.exports = (sequelize, DataTypes) => {
       uom_name: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true,
         validate: {
           notEmpty: {
             msg: "UOM name cannot be empty",
@@ -38,6 +37,12 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["uom_name"],
+        },
+      ],
     }
   );
 

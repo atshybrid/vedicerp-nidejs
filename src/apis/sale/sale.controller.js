@@ -165,4 +165,102 @@ module.exports = {
       );
     }
   },
+
+  getCashTotal: async (req, res) => {
+    try {
+      const result = await service.getCashTotal(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(res, result.data);
+    } catch (error) {
+      console.error(`${TAG} - getCashTotal: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.cash_total.error ")
+      );
+    }
+  },
+  createHandoverRequest: async (req, res) => {
+    try {
+      const result = await service.createHandoverRequest(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.sale.handover.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createHandoverRequest: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.handover.create.error ")
+      );
+    }
+  },
+  approveHandoverRequest: async (req, res) => {
+    try {
+      const result = await service.approveHandoverRequest(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText(
+          result?.data?.status === "APPROVED"
+            ? "messages.apis.app.sale.handover.approve.success"
+            : "messages.apis.app.sale.handover.approve.rejected"
+        )
+      );
+    } catch (error) {
+      console.error(`${TAG} - approveHandoverRequest: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.handover.approve.error ")
+      );
+    }
+  },
+  getHandoverRequests: async (req, res) => {
+    try {
+      const result = await service.getHandovers(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.sale.handover.read.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getHanoverRequests: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.handover.read.error ")
+      );
+    }
+  },
+
+  getHandoverDetails: async (req, res) => {
+    try {
+      const result = await service.getHandover(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(res, result.data);
+    } catch (error) {
+      console.error(`${TAG} - getHandoverDetails: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.handover.details.error ")
+      );
+    }
+  },
 };

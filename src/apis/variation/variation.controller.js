@@ -1,6 +1,7 @@
 const { getText } = require("../../../language/index");
 const service = require("./variation.service");
 const responses = require("../../../utils/api.responses");
+const { search } = require("./variation.router");
 
 const TAG = "variation.controller.js";
 
@@ -45,6 +46,28 @@ module.exports = {
       );
     }
   },
+
+  searchVariations: async (req, res) => {
+    try {
+      const result = await service.searchVariations(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.variation.search.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - searchVariations: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.variation.search.error ")
+      );
+    }
+  },
+
   updateVariation: async (req, res) => {
     try {
       const result = await service.updateVariation(req);

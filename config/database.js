@@ -1,25 +1,29 @@
 const { createPool, createConnection } = require("mysql");
 require("dotenv").config();
 
-const devDbCredentials = process.env.DB_CREDENTIALS.dev;
+const dbEnv = process.env.DB_ENV;
+
+const DbCredentials = process.env.DB_CREDENTIALS[dbEnv];
+
+console.log(`DB Credentials: ${JSON.stringify(DbCredentials)}`);
 
 const pool = createPool({
-  port: devDbCredentials.port,
-  host: devDbCredentials.host,
-  user: devDbCredentials.user,
-  password: devDbCredentials.password,
+  port: DbCredentials.port,
+  host: DbCredentials.host,
+  user: DbCredentials.user,
+  password: DbCredentials.password,
   insecureAuth: true,
-  database: devDbCredentials.database,
+  database: DbCredentials.database,
   connectionLimit: 10,
 });
 
 const connection = createConnection({
-  port: devDbCredentials.port,
-  host: devDbCredentials.host,
-  user: devDbCredentials.user,
-  password: devDbCredentials.password,
+  port: DbCredentials.port,
+  host: DbCredentials.host,
+  user: DbCredentials.user,
+  password: DbCredentials.password,
   insecureAuth: true,
-  database: devDbCredentials.database,
+  database: DbCredentials.database,
   connectionLimit: 10,
 });
 

@@ -25,6 +25,27 @@ module.exports = {
       );
     }
   },
+
+  fetchGSTDetails: async (req, res) => {
+    try {
+      const result = await service.fetchGSTDetails(req.body);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.customer.gst.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - fetchGSTDetails: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.customer.gst.error ")
+      );
+    }
+  },
   getCustomer: async (req, res) => {
     try {
       const result = await service.getCustomer(req);

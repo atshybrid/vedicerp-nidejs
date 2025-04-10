@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       item_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: "CASCADE",
       },
       variation_name: {
         type: DataTypes.STRING,
@@ -33,6 +34,19 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      image: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      // variation_value: {
+      //   type: DataTypes.STRING,
+      //   allowNull: false,
+      //   validate: {
+      //     notEmpty: {
+      //       msg: "Variation value cannot be empty",
+      //     },
+      //   },
+      // },
       mrp: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -43,26 +57,33 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      stock: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
+      discount: {
+        type: DataTypes.DECIMAL(10, 2),
         validate: {
           min: {
             args: [0],
-            msg: "Stock cannot be negative",
+            msg: "MRP must be a non-negative value",
           },
         },
       },
+      // stock: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: false,
+      //   defaultValue: 0,
+      //   validate: {
+      //     min: {
+      //       args: [0],
+      //       msg: "Stock cannot be negative",
+      //     },
+      //   },
+      // },
       barcode: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
       sku: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
       },
     },
     {
@@ -72,6 +93,16 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      indexes: [
+        {
+          unique: true,
+          fields: ["barcode"],
+        },
+        {
+          unique: true,
+          fields: ["sku"],
+        },
+      ],
     }
   );
 

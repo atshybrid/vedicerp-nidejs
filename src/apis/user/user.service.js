@@ -1,9 +1,11 @@
-const { User, Branch, Role } = require("./../../../models");
+const { User, Branch, Role, Company } = require("./../../../models");
 const bcrypt = require("bcrypt");
 const {
   sendServiceData,
   sendServiceMessage,
 } = require("./../../../utils/service.response");
+
+const { uploadToS3 } = require("./../../../utils/uploadToS3");
 
 const TAG = "user.service.js";
 
@@ -11,14 +13,17 @@ module.exports = {
   createUser: async ({ body }) => {
     try {
       // Validate body
-      if (
-        !body.mobile_number ||
-        !body.mpin ||
-        !body.name ||
-        !body.role_id ||
-        !body.branch_id
-      ) {
+      if (!body.mobile_number || !body.name || !body.role_id || !body.email) {
         return sendServiceMessage("messages.apis.app.user.create.invalid_body");
+      }
+
+      // Get Role Details
+      const role = await Role.findByPk(body.role_id);
+
+      if (role.role_name !== "ADMIN") {
+        return sendServiceMessage(
+          "messages.apis.app.user.create.non_employee_error"
+        );
       }
 
       // Ensure mobile_number and email are unique
@@ -42,27 +47,38 @@ module.exports = {
       }
 
       // Validate foreign keys (branch_id and role_id)
-      const branchExists = await Branch.findByPk(body.branch_id);
-      if (!branchExists) {
-        return sendServiceMessage(
-          "messages.apis.app.user.create.invalid_branch"
-        );
+
+      if (body.branch_id) {
+        const branchExists = await Branch.findByPk(body.branch_id);
+        if (!branchExists) {
+          return sendServiceMessage(
+            "messages.apis.app.user.create.invalid_branch"
+          );
+        }
       }
+
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
+        if (!companyExists) {
+          return sendServiceMessage(
+            "messages.apis.app.user.create.invalid_company"
+          );
+        }
+      }
+
       const roleExists = await Role.findByPk(body.role_id);
       if (!roleExists) {
         return sendServiceMessage("messages.apis.app.user.create.invalid_role");
       }
 
-      // Hash the mpin
-      const hashedMpin = await bcrypt.hash(body.mpin, 10);
-
       // Create the user
       const user = await User.create({
         mobile_number: body.mobile_number,
-        mpin: hashedMpin,
         name: body.name,
         email: body.email || null,
+        image: body.image || null,
         branch_id: body.branch_id,
+        company_id: body.company_id,
         role_id: body.role_id,
       });
 
@@ -79,6 +95,7 @@ module.exports = {
       const users = await User.findAll({
         include: [
           { model: Branch, as: "branch", attributes: ["branch_name"] },
+          { model: Company, as: "company", attributes: ["company_name"] },
           { model: Role, as: "role", attributes: ["role_name"] },
         ],
         attributes: [
@@ -87,7 +104,9 @@ module.exports = {
           "mobile_number",
           "email",
           "branch_id",
+          "company_id",
           "role_id",
+          "image",
         ],
       });
 
@@ -113,6 +132,7 @@ module.exports = {
           "email",
           "branch_id",
           "role_id",
+          "image",
         ],
       });
 
@@ -135,7 +155,7 @@ module.exports = {
       }
 
       // Find the user
-      const user = await User.findByPk(params.userId);
+      const user = await User.findByPk(params.user_id);
       if (!user) {
         return sendServiceMessage("messages.apis.app.user.update.not_found");
       }
@@ -162,14 +182,34 @@ module.exports = {
         }
       }
 
+      // Validate foreign keys (branch_id and role_id)
+      if (body.branch_id) {
+        const branchExists = await Branch.findByPk(body.branch_id);
+        if (!branchExists) {
+          return sendServiceMessage(
+            "messages.apis.app.user.update.invalid_branch"
+          );
+        }
+      }
+
+      if (body.company_id) {
+        const companyExists = await Company.findByPk(body.company_id);
+        if (!companyExists) {
+          return sendServiceMessage(
+            "messages.apis.app.user.update.invalid_company"
+          );
+        }
+      }
+
       // Update the user
       const updatedUser = await user.update({
         name: body.name || user.name,
         mobile_number: body.mobile_number || user.mobile_number,
         email: body.email || user.email,
         branch_id: body.branch_id || user.branch_id,
+        company_id: body.company_id || user.company_id,
         role_id: body.role_id || user.role_id,
-        mpin: body.mpin ? await bcrypt.hash(body.mpin, 10) : user.mpin,
+        image: body.image || user.image,
       });
 
       return sendServiceData(updatedUser);
@@ -252,6 +292,36 @@ module.exports = {
     } catch (error) {
       console.error(`${TAG} - resetMPIN: `, error);
       return sendServiceMessage("messages.apis.app.user.mpin.error");
+    }
+  },
+
+  uploadImage: async (req, res) => {
+    try {
+      if (!req.file || !req.file.buffer) {
+        return sendServiceMessage(
+          "messages.apis.app.user.upload_image.no_file_error"
+        );
+      }
+      if (!req.body.type) {
+        return sendServiceMessage(
+          "messages.apis.app.user.upload_image.missing_type_error"
+        );
+      }
+      const image = await uploadToS3(
+        null,
+        `${req.body.type}/${Date.now()}_${req.file.originalname}`,
+        req.file.buffer,
+        "application/octet-stream"
+      );
+
+      return sendServiceData({
+        ETag: image.ETag,
+        Location: image.Location,
+        key: image.Key,
+      });
+    } catch (err) {
+      console.log(err);
+      return sendServiceMessage("messages.apis.app.user.upload_image.error");
     }
   },
 };

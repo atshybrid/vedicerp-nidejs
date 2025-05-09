@@ -154,6 +154,7 @@ module.exports = {
           "phone_number",
           "credit_limit",
           "credit_period",
+          "balance",
         ],
       });
 

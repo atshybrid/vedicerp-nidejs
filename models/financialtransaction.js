@@ -80,7 +80,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       payment_method: {
-        type: DataTypes.ENUM("CASH", "UPI", "CARD", "NETBANKING", "SPLIT"),
+        type: DataTypes.ENUM(
+          "CASH",
+          "UPI",
+          "CARD",
+          "NETBANKING",
+          "SPLIT",
+          "BALANCE"
+        ),
         allowNull: false,
         validate: {
           notEmpty: {

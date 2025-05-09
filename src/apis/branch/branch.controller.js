@@ -257,6 +257,128 @@ module.exports = {
     }
   },
 
+  getPettyCashBalance: async (req, res) => {
+    try {
+      const result = await service.getPettyCashBalance(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.expenses.get_balance.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getPettyCashBalance: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.expenses.get_balance.error ")
+      );
+    }
+  },
+  getCashAccountBalance: async (req, res) => {
+    try {
+      const result = await service.getCashAccountBalance(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.cash_account.get_balance.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getPettyCashBalance: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.cash_account.get_balance.error ")
+      );
+    }
+  },
+
+  getFinancialTransactions: async (req, res) => {
+    try {
+      const result = await service.getFinancialTransactions(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result,
+        getText("messages.apis.app.branch.financial_transactions.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getFinancialTransactions: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.financial_transactions.error ")
+      );
+    }
+  },
+
+  createCashTransfer: async (req, res) => {
+    try {
+      const result = await service.createCashTransfer(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.cashTransfer.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createCashTransfer: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.cashTransfer.create_error ")
+      );
+    }
+  },
+
+  getCashTransfers: async (req, res) => {
+    try {
+      const result = await service.getCashTransfers(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.cashTransfer.list.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getCashTransfers: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.cashTransfer.list.error ")
+      );
+    }
+  },
+
+  approveOrRejectCashTransfer: async (req, res) => {
+    try {
+      const result = await service.approveOrRejectCashTransfer(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.branch.cashTransfer.update")
+      );
+    } catch (error) {
+      console.error(`${TAG} - approveOrRejectCashTransfer: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.branch.cashTransfer.list.error ")
+      );
+    }
+  },
+
   updateInvoicePrefix: async (req, res) => {
     try {
       const result = await service.updateInvoicePrefix(req);

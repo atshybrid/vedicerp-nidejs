@@ -71,7 +71,7 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Branch.afterCreate(async (branch, options) => {
-    const { CashAccount } = sequelize.models;
+    const { CashAccount, BranchPettyCashAccount } = sequelize.models;
     await CashAccount.create({
       branch_id: branch.id,
       balance: 0.0,

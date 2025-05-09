@@ -168,4 +168,106 @@ module.exports = {
       );
     }
   },
+
+  createBanner: async (req, res) => {
+    try {
+      const result = await service.createBanner(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.banner.create.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createBanner: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.banner.create.error")
+      );
+    }
+  },
+
+  updateBanner: async (req, res) => {
+    try {
+      const result = await service.updateBanner(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.banner.update.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - updateBanner: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.banner.update.error")
+      );
+    }
+  },
+  deleteBanner: async (req, res) => {
+    try {
+      const result = await service.deleteBanner(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        null,
+        getText("messages.apis.app.company.banner.delete.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - deleteBanner: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.banner.delete.error")
+      );
+    }
+  },
+  listBanners: async (req, res) => {
+    try {
+      const result = await service.listBanners(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.banner.list.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - listBanners: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.banner.list.error")
+      );
+    }
+  },
+  getBanner: async (req, res) => {
+    try {
+      const result = await service.getBanner(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.company.banner.read.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getBanner: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.company.banner.read.error")
+      );
+    }
+  },
 };

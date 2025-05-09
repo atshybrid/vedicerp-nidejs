@@ -73,6 +73,20 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      photo_proof: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        validate: {
+          isUrl: {
+            args: true,
+            msg: "Photo proof must be a valid URL",
+          },
+          len: {
+            args: [0, 255],
+            msg: "Photo proof cannot exceed 255 characters",
+          },
+        },
+      },
       type: {
         type: DataTypes.ENUM(
           "Product Purchases",

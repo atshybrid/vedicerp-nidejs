@@ -13,7 +13,13 @@ module.exports = {
   createUser: async ({ body }) => {
     try {
       // Validate body
-      if (!body.mobile_number || !body.name || !body.role_id || !body.email) {
+      if (
+        !body.mobile_number ||
+        !body.name ||
+        !body.role_id ||
+        !body.email ||
+        !body.company_id
+      ) {
         return sendServiceMessage("messages.apis.app.user.create.invalid_body");
       }
 

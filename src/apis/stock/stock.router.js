@@ -30,6 +30,11 @@ router.put(
   validateAdminOrManager,
   controller.acknowledgeStockTransfer
 );
+router.put(
+  "/request-status",
+  validateAdminOrManager,
+  controller.updateStockRequestStatus
+);
 router.put("/:stock_id", validateAdminOrManager, controller.updateStock);
 router.delete("/:stock_id", validateAdminOrManager, controller.deleteStock);
 

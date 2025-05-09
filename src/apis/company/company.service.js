@@ -3,6 +3,8 @@ const {
   BankAccount,
   Expense,
   Employee,
+  Branch,
+  Banner,
 } = require("./../../../models");
 
 const sequelize = require("sequelize");
@@ -388,5 +390,99 @@ module.exports = {
         "messages.apis.app.company.expenses.create.error"
       );
     }
+  },
+  createBanner: async ({ body }) => {
+    const { company_id, branch_id, banner_url, active = true } = body;
+
+    if (!banner_url || (!company_id && !branch_id)) {
+      return sendServiceMessage(
+        "messages.apis.app.company.banner.create.invalid_body"
+      );
+    }
+
+    const banner = await Banner.create({
+      company_id,
+      branch_id,
+      banner_url,
+      active,
+    });
+    return sendServiceData(banner);
+  },
+  updateBanner: async ({ params, body }) => {
+    const { banner_id } = params;
+    const { company_id, branch_id, banner_url, active } = body;
+
+    const banner = await Banner.findByPk(banner_id);
+
+    if (!banner) {
+      return sendServiceMessage(
+        "messages.apis.app.company.banner.update.not_found"
+      );
+    }
+
+    if (!banner_id || (!company_id && !branch_id)) {
+      return sendServiceMessage(
+        "messages.apis.app.company.banner.create.invalid_body"
+      );
+    }
+
+    await banner.update(body);
+    return sendServiceData(banner);
+  },
+  deleteBanner: async ({ params }) => {
+    const { banner_id } = params;
+    const banner = await Banner.findByPk(banner_id);
+
+    if (!banner) {
+      return sendServiceMessage(
+        "messages.apis.app.company.banner.delete.not_found"
+      );
+    }
+
+    await banner.destroy();
+    return banner;
+  },
+  getBanner: async ({ params }) => {
+    const { banner_id } = params;
+    const banner = await Banner.findByPk(banner_id);
+
+    if (!banner) {
+      return sendServiceMessage(
+        "messages.apis.app.company.banner.get.not_found"
+      );
+    }
+
+    return sendServiceData(banner);
+  },
+
+  listBanners: async ({ query }) => {
+    const { company_id, branch_id, active } = query;
+
+    let where = {};
+
+    if (branch_id) {
+      const branch = await Branch.findByPk(branch_id);
+
+      if (branch) {
+        where = {
+          [sequelize.Op.or]: [
+            { company_id: branch.company_id },
+            { branch_id: branch_id },
+          ],
+        };
+      }
+    } else if (company_id) {
+      where.company_id = company_id;
+    }
+
+    if (active !== undefined) {
+      where = {
+        ...where,
+        active,
+      };
+    }
+
+    const banners = await Banner.findAll({ where });
+    return sendServiceData(banners);
   },
 };

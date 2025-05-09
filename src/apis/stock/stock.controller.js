@@ -356,4 +356,25 @@ module.exports = {
       );
     }
   },
+
+  updateStockRequestStatus: async (req, res) => {
+    try {
+      const result = await service.updateStockRequestStatus(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result?.data,
+        getText("messages.apis.app.stock.request.update.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - updateStockRequestStatus: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.stock.request.update.error ")
+      );
+    }
+  },
 };

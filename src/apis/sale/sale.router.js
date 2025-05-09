@@ -4,6 +4,8 @@ const controller = require("./sale.controller");
 const {
   validateUser,
   validateAdminOrManager,
+  validateBiller,
+  validateManagerOrBiller,
 } = require("../../../middlewares/authorization");
 
 const router = Router({ mergeParams: true });
@@ -16,12 +18,15 @@ router.get(
   validateUser,
   controller.getHandoverDetails
 );
+router.get("/return", validateUser, controller.getSaleReturns);
+router.get("/return/:return_id", validateUser, controller.getSaleReturn);
 router.get("/:sale_id", validateUser, controller.getSale);
 router.get("/by_branch", validateUser, controller.listSalesByBranch);
 router.get("/by_customer", validateUser, controller.listSalesByCustomer);
 router.get("/by_pending_payments", controller.listSalesByPendingPayments);
 router.get("/", validateUser, controller.listSales);
 router.post("/", validateUser, controller.createSale);
+router.post("/return", validateUser, controller.createSaleReturn);
 router.post("/handover", validateUser, controller.createHandoverRequest);
 router.put("/:sale_id", validateUser, controller.updateSale);
 router.put(

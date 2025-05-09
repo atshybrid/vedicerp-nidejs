@@ -55,12 +55,20 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       transaction_type: {
-        type: DataTypes.ENUM("SALE", "PURCHASE", "TRANSFER", "ADJUSTMENT"),
+        type: DataTypes.ENUM(
+          "SALE",
+          "SALE_RETURN",
+          "PURCHASE",
+          "TRANSFER",
+          "ADJUSTMENT"
+        ),
         allowNull: false,
         validate: {
           isIn: {
-            args: [["SALE", "PURCHASE", "TRANSFER", "ADJUSTMENT"]],
-            msg: "Transaction type must be one of 'SALE', 'PURCHASE', 'TRANSFER', or 'ADJUSTMENT'",
+            args: [
+              ["SALE", "SALE_RETURN", "PURCHASE", "TRANSFER", "ADJUSTMENT"],
+            ],
+            msg: "Transaction type must be one of 'SALE', 'SALE_RETURN', 'PURCHASE', 'TRANSFER', or 'ADJUSTMENT'",
           },
         },
       },

@@ -20,6 +20,8 @@ const {
   sendServiceMessage,
 } = require("./../../../utils/service.response");
 const moment = require("moment");
+
+const _ = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 
 const TAG = "stock.service.js";
@@ -239,12 +241,28 @@ module.exports = {
       let updatedBranchItem;
 
       if (existingBranchItem) {
-        // Update stock if the item already exists
+        let newStock =
+          flow_type === "OUT"
+            ? existingBranchItem.stock - stock
+            : existingBranchItem.stock + stock;
+
+        if (newStock < 0) {
+          return sendServiceMessage(
+            "messages.apis.app.stock.branchItem.addStock.insufficient_stock"
+          );
+        }
+
         updatedBranchItem = await existingBranchItem.update({
-          stock: existingBranchItem.stock + stock,
+          stock: newStock,
         });
       } else {
-        // Create a new branch item if it doesn't exist
+        // Only allow creation on IN flow (cannot subtract from non-existent stock)
+        if (flow_type === "OUT") {
+          return sendServiceMessage(
+            "messages.apis.app.stock.branchItem.addStock.stock_not_found"
+          );
+        }
+
         updatedBranchItem = await BranchItem.create({
           branch_id,
           variation_id,
@@ -253,7 +271,6 @@ module.exports = {
           discount: variationExists.discount || 0,
         });
       }
-
       // Generate numeric timestamp in IST
       const transactionDateIST = moment().tz("Asia/Kolkata").unix(); // Numeric Unix timestamp
 
@@ -470,6 +487,8 @@ module.exports = {
         where: { batch_id, acknowledge: false },
       });
 
+      console.log("stockTransfers", stockTransfers);
+
       if (!stockTransfers || stockTransfers.length === 0) {
         return sendServiceMessage(
           "messages.apis.app.stock.transfer.acknowledge.invalid_batch"
@@ -512,10 +531,14 @@ module.exports = {
 
         const totalQuantity = received_quantity + lost_quantity;
 
+        console.log("totalQuantity", totalQuantity, "item", item);
+
         // Find the matching transfer for the variation
         const transfer = stockTransfers.find(
           (transfer) => transfer.variation_id === variation_id
         );
+
+        console.log("transfer", transfer);
 
         if (!transfer || transfer.quantity !== totalQuantity) {
           return sendServiceMessage(
@@ -562,7 +585,11 @@ module.exports = {
         });
 
         // Update the transfer record as acknowledged
-        await transfer.update({ acknowledge: true });
+        await transfer.update({
+          acknowledge: true,
+          received_quantity,
+          lost_quantity,
+        });
 
         results.push({ transfer, received_quantity, lost_quantity });
       }
@@ -634,6 +661,8 @@ module.exports = {
           "quantity",
           "acknowledge",
           "transfer_date",
+          "received_quantity",
+          "lost_quantity",
         ],
         order: [["transfer_date", "DESC"]],
       });
@@ -666,6 +695,8 @@ module.exports = {
           item_name: transfer.variation.item.item_name,
           quantity: transfer.quantity,
           acknowledge: transfer.acknowledge,
+          received_quantity: transfer.received_quantity,
+          lost_quantity: transfer.lost_quantity,
         });
 
         return acc;
@@ -1520,6 +1551,9 @@ module.exports = {
         );
       }
 
+      // Generate a unique batch_id for this stock request session
+      const batch_id = uuidv4();
+
       // Iterate through items and validate/create stock requests
       const stockRequests = [];
       for (const item of items) {
@@ -1547,6 +1581,7 @@ module.exports = {
 
         // Create stock request for each item
         const stockRequest = await StockRequest.create({
+          batch_id,
           branch_id,
           manager_id,
           company_id,
@@ -1582,7 +1617,7 @@ module.exports = {
       if (manager_id) filter.manager_id = manager_id;
       if (company_id) filter.company_id = company_id;
 
-      // Fetch stock requests with necessary relationships
+      // Fetch stock requests
       const stockRequests = await StockRequest.findAll({
         where: filter,
         include: [
@@ -1611,7 +1646,6 @@ module.exports = {
           {
             model: ItemVariation,
             as: "variation",
-            attributes: ["variation_id", "variation_name"],
             include: [
               {
                 model: Item,
@@ -1622,6 +1656,7 @@ module.exports = {
           },
         ],
         attributes: [
+          "batch_id", // include batch_id for grouping
           "stock_request_id",
           "branch_id",
           "manager_id",
@@ -1636,10 +1671,71 @@ module.exports = {
         order: [["request_date", "DESC"]],
       });
 
-      return sendServiceData(stockRequests);
+      // Group by batch_id using lodash
+      const grouped = _.groupBy(stockRequests, "batch_id");
+
+      // Convert to array format for easier frontend use
+      const result = Object.entries(grouped).map(([batch_id, requests]) => ({
+        batch_id,
+        batch_status: requests[0]?.status || null,
+        items: requests,
+        created_at: requests[0]?.created_at || null,
+        request_date: requests[0]?.request_date || null,
+      }));
+
+      return sendServiceData(result);
     } catch (error) {
       console.error(`${TAG} - getStockRequests: `, error);
       return sendServiceMessage("messages.apis.app.stock.request.read.error");
+    }
+  },
+
+  updateStockRequestStatus: async (req) => {
+    try {
+      const { batch_id, status } = req.body;
+
+      console.log("Update Stock Request Status", batch_id, status);
+
+      if (!batch_id || !status) {
+        return sendServiceMessage(
+          "messages.apis.app.stock.request.update.invalid_body"
+        );
+      }
+
+      // Validate status
+      const validStatuses = [
+        "PENDING",
+        "REJECTED",
+        "PARTIALLY APPROVED",
+        "APPROVED",
+      ];
+      if (!validStatuses.includes(status)) {
+        return sendServiceMessage(
+          "messages.apis.app.stock.request.update.invalid_status"
+        );
+      }
+
+      // Check if such stock requests exist
+      const stockRequests = await StockRequest.findAll({ where: { batch_id } });
+
+      if (!stockRequests || stockRequests.length === 0) {
+        return sendServiceMessage(
+          "messages.apis.app.stock.request.update.not_found"
+        );
+      }
+
+      // Update all requests in the batch
+      await StockRequest.update(
+        { status },
+        {
+          where: { batch_id },
+        }
+      );
+
+      return sendServiceData(stockRequests);
+    } catch (error) {
+      console.error(`${TAG} - updateStockRequestStatus:`, error);
+      return sendServiceMessage("messages.apis.app.stock.request.update.error");
     }
   },
 };

@@ -28,26 +28,13 @@ const TAG = "employee.service.js";
 module.exports = {
   createEmployee: async ({ body }) => {
     try {
+      let employeeCodePrefix = "EMP";
+      let prefix = "ORG";
+
       // Validate input
-      if (
-        (!body.name || !body.role_id || !body.phone_number,
-        !body.email,
-        !body.mpin,
-        !body.employee_no)
-      ) {
+      if ((!body.name || !body.role_id || !body.phone_number, !body.email)) {
         return sendServiceMessage(
           "messages.apis.app.employee.create.invalid_body"
-        );
-      }
-
-      // Employee number should be unique
-      const existingEmployee = await Employee.findOne({
-        where: { employee_no: body.employee_no },
-      });
-
-      if (existingEmployee) {
-        return sendServiceMessage(
-          "messages.apis.app.employee.create.duplicate_employee_no"
         );
       }
 
@@ -102,6 +89,47 @@ module.exports = {
         }
       }
 
+      if (body.branch_id) {
+        const branch = await Branch.findByPk(body.branch_id);
+        if (branch) {
+          prefix =
+            branch.invoice_prefix ||
+            branch.branch_name?.substring(0, 3).toUpperCase() ||
+            "BRN";
+        }
+      } else if (body.company_id) {
+        const company = await Company.findByPk(body.company_id);
+        if (company) {
+          prefix = company.company_name?.substring(0, 3).toUpperCase() || "ORG";
+        }
+      }
+
+      let empCount = 0;
+      if (body.branch_id) {
+        empCount = await Employee.count({
+          include: [
+            {
+              model: User,
+              as: "user",
+              where: { branch_id: body.branch_id },
+            },
+          ],
+        });
+      } else if (body.company_id) {
+        empCount = await Employee.count({
+          include: [
+            {
+              model: User,
+              as: "user",
+              where: { company_id: body.company_id },
+            },
+          ],
+        });
+      }
+
+      const paddedCount = String(empCount + 1).padStart(5, "0");
+      const generatedEmployeeNo = `${prefix}_${employeeCodePrefix}_${paddedCount}`;
+
       // Create the user
       const user = await User.create({
         mobile_number: body.mobile_number,
@@ -121,7 +149,7 @@ module.exports = {
 
       const employee = await Employee.create({
         user_id: user.user_id,
-        employee_no: body.employee_no || null,
+        employee_no: generatedEmployeeNo,
       });
 
       const employeeWithUser = await Employee.findByPk(employee.employee_id, {
@@ -150,24 +178,29 @@ module.exports = {
 
   getEmployees: async ({ query }) => {
     try {
-      const { role } = query;
-      // Build filter condition
-      let filter = {};
+      const { role, branch_id } = query;
+
+      // Initialize filter for nested user
+      const userFilter = {};
+
+      // If role is provided, get role_id and filter
       if (role) {
-        // Find th role by name
         const roleExists = await Role.findOne({ where: { role_name: role } });
         if (!roleExists) {
           return sendServiceMessage(
             "messages.apis.app.employee.read.invalid_role"
           );
         }
-        console.log("roleExists", roleExists?.role_id);
-        filter.role_id = roleExists.role_id;
+        userFilter.role_id = roleExists.role_id;
       }
 
-      // Retrieve all employees with related role, branch, and company details
+      // If branch_id is provided, add to user filter
+      if (branch_id) {
+        userFilter.branch_id = branch_id;
+      }
+
+      // Fetch employees with filters
       const employees = await Employee.findAll({
-        // where: filter,
         include: [
           {
             model: User,
@@ -187,11 +220,12 @@ module.exports = {
                 attributes: ["role_id", "role_name"],
               },
             ],
-            where: role ? { role_id: filter.role_id } : undefined,
+            where: Object.keys(userFilter).length > 0 ? userFilter : undefined,
           },
         ],
         attributes: ["employee_id", "employee_no", "user_id"],
       });
+
       return sendServiceData(employees);
     } catch (error) {
       console.error(`${TAG} - getEmployees: `, error);
@@ -668,6 +702,34 @@ module.exports = {
         );
       }
 
+      // Check if the biller has already checked in today
+      const startOfDay = moment
+        .tz(timestamp, "Asia/Kolkata")
+        .startOf("day")
+        .valueOf();
+      const endOfDay = moment
+        .tz(timestamp, "Asia/Kolkata")
+        .endOf("day")
+        .valueOf();
+
+      const existingCheckIn = await CounterRegister.findOne({
+        where: {
+          biller_id,
+          branch_id,
+          company_id,
+          status: "OPEN",
+          shift_start: {
+            [Op.between]: [startOfDay, endOfDay],
+          },
+        },
+      });
+
+      if (existingCheckIn) {
+        return sendServiceMessage(
+          "messages.apis.app.employee.checkIn.already_checked_in"
+        );
+      }
+
       // Check for pending handovers
       const pendingHandover = await CashHandover.findOne({
         where: {
@@ -684,43 +746,15 @@ module.exports = {
       });
 
       if (
-        pendingHandover.status === "PENDING" ||
-        pendingHandover.status === "REJECTED"
+        pendingHandover &&
+        (pendingHandover?.status === "PENDING" ||
+          pendingHandover?.status === "REJECTED")
       ) {
         return sendServiceMessage(
           "messages.apis.app.employee.checkIn.pending_handover_exists",
           { pending_request: pendingHandover }
         );
       }
-
-      // Check if the biller has already checked in today
-      const startOfDay = moment
-        .tz(timestamp, "Asia/Kolkata")
-        .startOf("day")
-        .valueOf();
-      const endOfDay = moment
-        .tz(timestamp, "Asia/Kolkata")
-        .endOf("day")
-        .valueOf();
-
-      // TODO: Uncomment this block after testing
-      // const existingCheckIn = await CounterRegister.findOne({
-      //   where: {
-      //     biller_id,
-      //     branch_id,
-      //     company_id,
-      //     status: "OPEN",
-      //     shift_start: {
-      //       [Op.between]: [startOfDay, endOfDay],
-      //     },
-      //   },
-      // });
-
-      // if (existingCheckIn) {
-      //   return sendServiceMessage(
-      //     "messages.apis.app.employee.checkIn.already_checked_in"
-      //   );
-      // }
 
       // Create check-in entry
       const counterRegister = await CounterRegister.create({

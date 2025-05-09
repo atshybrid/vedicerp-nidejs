@@ -86,6 +86,28 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      received_quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+        validate: {
+          min: {
+            args: [0],
+            msg: "Received quantity cannot be negative",
+          },
+        },
+      },
+      lost_quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+        validate: {
+          min: {
+            args: [0],
+            msg: "Lost quantity cannot be negative",
+          },
+        },
+      },
       transfer_date: {
         type: DataTypes.BIGINT, // Storing timestamp
         allowNull: false,

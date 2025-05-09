@@ -45,6 +45,67 @@ module.exports = {
       );
     }
   },
+  createSaleReturn: async (req, res) => {
+    try {
+      const result = await service.createSaleReturn(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.sale.return.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - createSale: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.return.error ")
+      );
+    }
+  },
+
+  getSaleReturn: async (req, res) => {
+    try {
+      const result = await service.getSaleReturn(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.sale.read.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getSale: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.read.error ")
+      );
+    }
+  },
+
+  getSaleReturns: async (req, res) => {
+    try {
+      const result = await service.getSaleReturns(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.sale.read.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getSale: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.sale.read.error ")
+      );
+    }
+  },
+
   updateSale: async (req, res) => {
     try {
       const result = await service.updateSale(req);

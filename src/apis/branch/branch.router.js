@@ -5,6 +5,7 @@ const {
   validateUser,
   validateAdminOrManager,
   validateAdmin,
+  validateManager,
 } = require("../../../middlewares/authorization");
 
 const router = Router({ mergeParams: true });
@@ -26,12 +27,38 @@ router.get(
   validateAdminOrManager,
   controller.getExpense
 );
+router.get(
+  "/cash-transfer",
+  validateAdminOrManager,
+  controller.getCashTransfers
+);
+router.get(
+  "/petty-cash/:branch_id",
+  validateAdminOrManager,
+  controller.getPettyCashBalance
+);
+router.get(
+  "/cash-account/:branch_id",
+  validateAdminOrManager,
+  controller.getCashAccountBalance
+);
+router.get(
+  "/financial-transaction",
+  validateAdminOrManager,
+  controller.getFinancialTransactions
+);
 router.get("/:branch_id", validateAdminOrManager, controller.getBranch);
 router.post("/expense", validateAdminOrManager, controller.createExpense);
 router.post("/", validateAdmin, controller.createBranch);
+router.post("/cash-transfer", validateManager, controller.createCashTransfer);
 router.put("/add-balance", validateAdmin, controller.addBalanceToPettyCash);
 router.put("/expense", validateAdmin, controller.updateExpenseStatus);
 router.put("/invoice-prefix", validateAdmin, controller.updateInvoicePrefix);
+router.put(
+  "/cash-transfer",
+  validateAdminOrManager,
+  controller.approveOrRejectCashTransfer
+);
 router.put("/:branch_id", validateAdmin, controller.updateBranch);
 router.delete("/:branch_id", validateAdmin, controller.deleteBranch);
 

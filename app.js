@@ -55,7 +55,7 @@ app.use("/public", require("./src/public/public.router"));
 
     // Check and create default company
     const [defaultCompany, createdCompany] = await Company.findOrCreate({
-      where: { company_name: "Vedic Hivery Pvt Ltd" },
+      where: { company_name: "Amonghya Tech" },
       defaults: {
         address_line1: "No. 101, Main Road",
         address_line2: "Industrial Area",
@@ -64,10 +64,10 @@ app.use("/public", require("./src/public/public.router"));
         postal_code: "560001",
         country: "India",
         gst_number: "29ABCDE1234FZ1",
-        pan_number: "ABCDE1234F",
-        phone_number: "+918765432100",
-        email: "contact@vedichivery.com",
-        website: "https://vedichivery.com",
+        pan_number: "ABCER1234F",
+        phone_number: "+918765432112",
+        email: "contact@vedic.com",
+        website: "https://vedic.com",
       },
     });
 
@@ -81,18 +81,6 @@ app.use("/public", require("./src/public/public.router"));
       defaults: {
         name: "Kamruddin Khan",
         mobile_number: "7908489944",
-        mpin: "123456", // Ensure this is hashed in the `beforeCreate` hook
-        role_id: superAdminRole.role_id,
-        company_id: defaultCompany.company_id,
-      },
-    });
-
-    const [adminUser, createdAdminUser] = await User.findOrCreate({
-      where: { email: "hello@pravat.dev" },
-      defaults: {
-        name: "Pravat Kumar",
-        mobile_number: "7908489943",
-        mpin: "123456", // Ensure this is hashed in the `beforeCreate` hook
         role_id: superAdminRole.role_id,
         company_id: defaultCompany.company_id,
       },
@@ -100,9 +88,6 @@ app.use("/public", require("./src/public/public.router"));
 
     if (createdSuperAdminUser) {
       console.log("Super-admin user created successfully.");
-    }
-    if (createdAdminUser) {
-      console.log("Admin user created successfully.");
     }
 
     // Start Server

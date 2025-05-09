@@ -41,8 +41,8 @@
       <div>{{company.state}}</div>
       <div>Ph: {{company.phone}}</div>
       <div>GST: {{company.gst}}</div>
-      <div>CIN: {{company.cin}}</div>
-      <div>FSSAI: {{company.fssai}}</div>
+      {{!-- <div>CIN: {{company.cin}}</div>
+      <div>FSSAI: {{company.fssai}}</div> --}}
     </div>
 
     <div class="section-title">TAX INVOICE</div>
@@ -90,24 +90,11 @@
         <tr class="bold">
           <td>Total</td>
           <td>{{summary.totalQty}}</td>
-          <td></td>
+          <td>{{summary.totalRate}}</td>
           <td>{{summary.totalDiscount}}</td>
           <td>{{summary.totalAmount}}</td>
         </tr>
       </tbody>
-    </table>
-
-    <div class="line"></div>
-
-    <table class="payment-table">
-      <tr>
-        <td>Payment Method:</td>
-        <td class="right">{{payment.method}}</td>
-      </tr>
-      <tr class="bold">
-        <td>Amount Paid:</td>
-        <td class="right">₹{{payment.amount}}</td>
-      </tr>
     </table>
 
     <div class="line"></div>
@@ -120,7 +107,7 @@
           <th>TaxAmt</th>
           <th>SGST</th>
           <th>CGST</th>
-          <th>Net</th>
+          <th>Rate + Tax</th>
         </tr>
       </thead>
       <tbody>
@@ -145,6 +132,19 @@
 
     <div class="line"></div>
 
+    <table class="payment-table">
+      <tr>
+        <td>Payment Method:</td>
+        <td class="right">{{payment.method}}</td>
+      </tr>
+      <tr class="bold">
+        <td>Amount Paid:</td>
+        <td class="right">₹{{payment.amount}}</td>
+      </tr>
+    </table>
+
+    <div class="line"></div>
+
     <table class="summary-table">
       <tr><td>Savings on this Invoice:</td><td
           class="right"
@@ -156,7 +156,9 @@
       <tr><td>Promo Discount:</td><td
           class="right"
         >₹{{summary.promoDiscount}}</td></tr>
+      <tr><td>Taxes:</td><td class="right">₹{{taxTotal.totalTax}}</td></tr>
       <tr><td>Net Value:</td><td class="right bold">₹{{summary.net}}</td></tr>
+      <tr><td>Round Off:</td><td class="right">₹{{summary.roundOff}}</td></tr>
       <tr><td>Received:</td><td class="right">₹{{summary.received}}</td></tr>
       <tr><td>Balance:</td><td class="right">₹{{summary.balance}}</td></tr>
     </table>

@@ -42,6 +42,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      batch_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       manager_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -65,7 +69,12 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       status: {
-        type: DataTypes.ENUM("PENDING", "APPROVED", "REJECTED"),
+        type: DataTypes.ENUM(
+          "PENDING",
+          "REJECTED",
+          "PARTIALLY APPROVED",
+          "APPROVED"
+        ),
         allowNull: false,
         defaultValue: "PENDING",
       },

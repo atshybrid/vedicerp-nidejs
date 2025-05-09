@@ -45,8 +45,8 @@ const isAdmin = async (req, res, next) => {
     }
 
     if (
-      user.role_id === role.role_id ||
-      user.role_id === superAdminRole.role_id
+      user.role_id === role?.role_id ||
+      user.role_id === superAdminRole?.role_id
     ) {
       req.user = user;
       next();
@@ -105,9 +105,9 @@ const isAdminOrManager = async (req, res, next) => {
     });
 
     if (
-      user.role_id === adminRole.role_id ||
-      user.role_id === managerRole.role_id ||
-      user.role_id === superAdminRole.role_id
+      user.role_id === adminRole?.role_id ||
+      user.role_id === managerRole?.role_id ||
+      user.role_id === superAdminRole?.role_id
     ) {
       req.user = user;
       if (employee) {

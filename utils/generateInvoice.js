@@ -10,9 +10,8 @@ async function generateInvoice(data) {
   const html = template(data);
 
   const browser = await puppeteer.launch({
-    executablePath:
-      "/home/puppeteer-user/.cache/puppeteer/chrome/linux-133.0.6943.53/chrome-linux64/chrome",
-    args: ["--no-sandbox", "--enable-gpu", "--disable-setuid-sandbox"],
+    headless: "new",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   const page = await browser.newPage();

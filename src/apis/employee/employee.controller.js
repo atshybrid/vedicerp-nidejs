@@ -86,7 +86,25 @@ module.exports = {
       );
     }
   },
-
+  getAdminAnalytics: async (req, res) => {
+    try {
+      const result = await service.getAdminAnalytics(req);
+      if (result.error) {
+        return responses.badRequestResponse(res, result.message);
+      }
+      return responses.successResponse(
+        res,
+        result.data,
+        getText("messages.apis.app.employee.analytics.success")
+      );
+    } catch (error) {
+      console.error(`${TAG} - getAdminAnalytics: `, error);
+      return responses.internalFailureResponse(
+        res,
+        getText("messages.apis.app.employee.analytics.error ")
+      );
+    }
+  },
   updateEmployee: async (req, res) => {
     try {
       const result = await service.updateEmployee(req);

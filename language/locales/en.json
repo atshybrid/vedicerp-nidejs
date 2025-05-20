@@ -337,6 +337,7 @@
 							"invalid_body": "Invalid request. Please provide all required details: company_id, bank_account_id, amount, transaction_date, type, recorded_by.",
 							"invalid_amount": "Expense amount must be greater than zero.",
 							"invalid_branch": "The specified branch does not exist.",
+							"invalid_company": "The specified company does not exist.",
 							"invalid_employee": "The specified employee does not exist or is unauthorized.",
 							"insufficient_funds": "Insufficient balance in the branch's petty cash account.",
 							"error": "An error occurred while recording the expense.",
@@ -1060,7 +1061,14 @@
 					"b2c_month_mismatch": "messages.apis.app.saleReturn.b2c_month_mismatch",
 					"get": {
 						"error": "messages.apis.app.saleReturn.get.error",
-						"return_not_found": "messages.apis.app.saleReturn.get.return_not_found"
+						"return_not_found": "messages.apis.app.saleReturn.get.return_not_found",
+						"no_returns": "messages.apis.app.saleReturn.get.no_returns"
+					}
+				},
+				"companybankaccount": {
+					"list": {
+						"success": "Company Bank accounts fetched successfully",
+						"error": "Error fetching companybankaccount"
 					}
 				}
 			},

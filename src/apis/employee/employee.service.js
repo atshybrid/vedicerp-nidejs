@@ -178,7 +178,7 @@ module.exports = {
 
   getEmployees: async ({ query }) => {
     try {
-      const { role, branch_id } = query;
+      const { role, branch_id, company_id } = query;
 
       // Initialize filter for nested user
       const userFilter = {};
@@ -198,6 +198,9 @@ module.exports = {
       if (branch_id) {
         userFilter.branch_id = branch_id;
       }
+      if (company_id) {
+        userFilter.company_id = company_id;
+      }
 
       // Fetch employees with filters
       const employees = await Employee.findAll({
@@ -212,6 +215,7 @@ module.exports = {
               "mobile_number",
               "role_id",
               "branch_id",
+              "company_id",
             ],
             include: [
               {
@@ -515,6 +519,207 @@ module.exports = {
       });
     } catch (error) {
       console.error(`${TAG} - getManagerAnalytics:`, error);
+      return sendServiceMessage("messages.apis.app.employee.analytics.error");
+    }
+  },
+  getAdminAnalytics: async (req) => {
+    try {
+      const { company_id } = req;
+
+      console.log("Body", company_id);
+
+      if (!company_id) {
+        return sendServiceMessage(
+          "messages.apis.app.employee.analytics.invalid_body"
+        );
+      }
+
+      const todayStart = moment().tz("Asia/Kolkata").startOf("day").valueOf();
+      const todayEnd = moment().tz("Asia/Kolkata").endOf("day").valueOf();
+      const monthStart = moment().tz("Asia/Kolkata").startOf("month").valueOf();
+      const weekStart = moment()
+        .tz("Asia/Kolkata")
+        .subtract(7, "days")
+        .startOf("day")
+        .valueOf();
+
+      // ===== Attendance Stats =====
+      const totalEmployees = await Employee.count({
+        include: [
+          {
+            model: User,
+            as: "user",
+          },
+        ],
+      });
+
+      const todayAttendance = await Attendance.findAll({
+        where: {
+          company_id,
+          timestamp: { [Op.between]: [todayStart, todayEnd] },
+        },
+      });
+
+      const presentToday = todayAttendance.filter(
+        (a) =>
+          a.attendance_status === "Present" ||
+          a.attendance_status === "Half-Day"
+      ).length;
+      const absentToday = totalEmployees - presentToday;
+
+      // ===== Low Stock Items =====
+      const lowStockItems = await BranchItem.findAll({
+        where: {
+          stock: { [Op.lt]: 10 },
+        },
+        include: [
+          {
+            model: ItemVariation,
+            as: "variation",
+            attributes: ["variation_id", "variation_name"],
+            include: [
+              {
+                model: Item,
+                as: "item",
+                attributes: ["item_name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      const lowStock = lowStockItems.map((item) => ({
+        item_id: item.variation_id,
+        item_name: item.variation?.item?.item_name || "Unknown",
+        variation_name: item.variation?.variation_name || "Unknown",
+        current_stock: item.stock,
+        min_required: 10,
+      }));
+      // ===== Pending Stock Requests =====
+      const stockRequests = await StockRequest.findAll({
+        where: {
+          company_id,
+          status: "PENDING",
+        },
+        include: [
+          {
+            model: ItemVariation,
+            as: "variation",
+            attributes: ["variation_id", "variation_name"],
+            include: [
+              {
+                model: Item,
+                as: "item",
+                attributes: ["item_name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      const pendingStockRequests = stockRequests.map((req) => ({
+        request_id: req.stock_request_id,
+        item_name: req.variation?.item?.item_name || "Unknown",
+        variation_name: req.variation?.variation_name || "Unknown",
+        requested_qty: req.stock_requested,
+        status: req.status,
+        requested_date: moment(req.request_date).format("YYYY-MM-DD"),
+      }));
+
+      // ===== Expenses =====
+      const todayExpensesData = await Expense.findAll({
+        where: {
+          expense_date: { [Op.between]: [todayStart, todayEnd] },
+        },
+      });
+
+      const weekExpensesData = await Expense.findAll({
+        where: {
+          expense_date: { [Op.gte]: weekStart },
+        },
+        limit: 10,
+        order: [["expense_date", "DESC"]],
+      });
+
+      const todayExpenses = todayExpensesData.reduce(
+        (sum, e) => sum + parseFloat(e.amount),
+        0
+      );
+      const totalExpensesThisMonth = weekExpensesData.reduce(
+        (sum, e) => sum + parseFloat(e.amount),
+        0
+      );
+
+      const recentExpenses = weekExpensesData.map((e) => ({
+        expense_id: e.expense_id,
+        category: e.type,
+        amount: parseFloat(e.amount),
+        date: moment(e.expense_date).format("YYYY-MM-DD"),
+      }));
+
+      // ===== Pending Cash Collections (handover approvals) =====
+      const pendingCashHandover = await CashHandover.findAll({
+        where: {
+          status: "PENDING",
+          created_at: {
+            [Op.between]: [
+              moment().tz("Asia/Kolkata").startOf("day").toDate(),
+              moment().tz("Asia/Kolkata").endOf("day").toDate(),
+            ],
+          },
+        },
+        include: [
+          {
+            model: Employee,
+            as: "biller",
+            include: [
+              {
+                model: User,
+                as: "user",
+                attributes: ["name"],
+              },
+            ],
+          },
+        ],
+      });
+
+      const cashCollections = pendingCashHandover.map((handover) => ({
+        biller_name: handover.biller?.user?.name || "Unknown",
+        total_cash_collected: parseFloat(handover.cash_amount || 0),
+        handover_id: handover.handover_id,
+        approval_status: handover.status,
+        date: moment(handover.created_at).format("YYYY-MM-DD"),
+      }));
+
+      // ===== Build Final Response =====
+      return sendServiceData({
+        summary: {
+          total_employees: totalEmployees,
+          present_today: presentToday,
+          absent_today: absentToday,
+          low_stock_items: lowStock.length,
+          pending_stock_requests: pendingStockRequests.length,
+          pending_cash_collections: cashCollections.length,
+        },
+        attendance: {
+          present_count: presentToday,
+          absent_count: absentToday,
+          attendance_percentage:
+            totalEmployees > 0
+              ? Math.round((presentToday / totalEmployees) * 100)
+              : 0,
+        },
+        low_stock: lowStock,
+        stock_requests: pendingStockRequests,
+        expenses: {
+          today_expenses: todayExpenses,
+          total_expenses_this_month: totalExpensesThisMonth,
+          recent_expenses: recentExpenses,
+        },
+        cash_collections: cashCollections,
+      });
+    } catch (error) {
+      console.error(`${TAG} - getAdminAnalytics:`, error);
       return sendServiceMessage("messages.apis.app.employee.analytics.error");
     }
   },

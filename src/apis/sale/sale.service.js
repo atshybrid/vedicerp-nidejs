@@ -786,7 +786,14 @@ module.exports = {
   // List All Sales
   getSales: async ({ query }) => {
     try {
-      const { fromDate, toDate, biller_id, branch_id, customer_id } = query;
+      const {
+        fromDate,
+        toDate,
+        biller_id,
+        branch_id,
+        customer_id,
+        company_id,
+      } = query;
 
       // Build filter for sales
       const salesFilter = {};
@@ -804,6 +811,7 @@ module.exports = {
       if (biller_id) salesFilter.employee_id = biller_id;
       if (branch_id) salesFilter.branch_id = branch_id;
       if (customer_id) salesFilter.customer_id = customer_id;
+      if (company_id) salesFilter.company_id = company_id;
 
       // Fetch sales with filter
       const sales = await Sale.findAll({
@@ -823,7 +831,13 @@ module.exports = {
               {
                 model: User,
                 as: "user",
-                attributes: ["branch_id", "name", "email", "mobile_number"],
+                attributes: [
+                  "branch_id",
+                  "name",
+                  "email",
+                  "mobile_number",
+                  "company_id",
+                ],
               },
             ],
           },
@@ -1000,6 +1014,9 @@ module.exports = {
         items, // array of return items
         return_by, // "branch" or "company"
         remarks,
+        manager_id,
+        company_id,
+        branch_id,
       } = req.body;
 
       const { employee_id } = req;
@@ -1008,6 +1025,9 @@ module.exports = {
       if (
         !sale_id ||
         !customer_id ||
+        !manager_id ||
+        !company_id ||
+        !branch_id ||
         !return_date ||
         !items ||
         items.length === 0
@@ -1107,6 +1127,9 @@ module.exports = {
         return_amount: totalReturnAmount,
         return_date,
         remarks: remarks || null,
+        branch_id,
+        manager_id,
+        company_id,
       });
 
       // Now for each item, adjust stock and create stock register entry
@@ -1322,7 +1345,14 @@ module.exports = {
   // List All Sale Returns
   getSaleReturns: async ({ query }) => {
     try {
-      const { fromDate, toDate, customer_id } = query;
+      const {
+        fromDate,
+        toDate,
+        manager_id,
+        branch_id,
+        customer_id,
+        company_id,
+      } = query;
 
       const returnFilter = {};
       if (fromDate && toDate) {
@@ -1337,6 +1367,9 @@ module.exports = {
         };
       }
       if (customer_id) returnFilter.customer_id = customer_id;
+      if (manager_id) returnFilter.manager_id = manager_id;
+      if (branch_id) returnFilter.branch_id = branch_id;
+      if (company_id) returnFilter.company_id = company_id;
 
       const returns = await SaleReturn.findAll({
         where: returnFilter,
@@ -1362,7 +1395,13 @@ module.exports = {
                   {
                     model: User,
                     as: "user",
-                    attributes: ["branch_id", "name", "email", "mobile_number"],
+                    attributes: [
+                      "branch_id",
+                      "name",
+                      "email",
+                      "mobile_number",
+                      "company_id",
+                    ],
                   },
                 ],
               },

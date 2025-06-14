@@ -2086,6 +2086,7 @@ module.exports = {
           "handover_id",
           "branch_id",
           "manager_id",
+          "biller_id",
           "cash_amount",
           "status",
           "approval_date",
@@ -2095,7 +2096,85 @@ module.exports = {
         order: [["created_at", "DESC"]], // Sort by the creation date
       });
 
-      return sendServiceData(handovers);
+      // Enhance each handover with payment totals and shift times
+      const enhancedHandovers = await Promise.all(
+        handovers.map(async (handover) => {
+          const shiftStart = handover.register.shift_start;
+          const shiftEnd = handover.register.shift_end || Date.now();
+
+          // Fetch transactions for this shift
+          const [cashTransactions, upiTransactions, cardTransactions] =
+            await Promise.all([
+              FinancialTransaction.findAll({
+                where: {
+                  branch_id: handover.branch_id,
+                  employee_id: handover.biller_id,
+                  transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+                  payment_method: "CASH",
+                },
+                attributes: ["amount"],
+              }),
+              FinancialTransaction.findAll({
+                where: {
+                  branch_id: handover.branch_id,
+                  employee_id: handover.biller_id,
+                  transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+                  payment_method: "UPI",
+                },
+                attributes: ["amount"],
+              }),
+              FinancialTransaction.findAll({
+                where: {
+                  branch_id: handover.branch_id,
+                  employee_id: handover.biller_id,
+                  transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+                  payment_method: "CARD",
+                },
+                attributes: ["amount"],
+              }),
+            ]);
+
+          // Calculate totals
+          const cashTotal = cashTransactions.reduce(
+            (sum, transaction) => sum + parseFloat(transaction.amount),
+            0
+          );
+
+          const upiTotal = upiTransactions.reduce(
+            (sum, transaction) => sum + parseFloat(transaction.amount),
+            0
+          );
+
+          const cardTotal = cardTransactions.reduce(
+            (sum, transaction) => sum + parseFloat(transaction.amount),
+            0
+          );
+
+          return {
+            ...handover.toJSON(),
+            shift_times: {
+              check_in: handover.register.shift_start,
+              check_out: handover.register.shift_end,
+              check_in_formatted: moment(handover.register.shift_start).format(
+                "DD-MM-YYYY HH:mm:ss"
+              ),
+              check_out_formatted: handover.register.shift_end
+                ? moment(handover.register.shift_end).format(
+                    "DD-MM-YYYY HH:mm:ss"
+                  )
+                : null,
+            },
+            payment_totals: {
+              cash_total: cashTotal.toFixed(2),
+              upi_total: upiTotal.toFixed(2),
+              card_total: cardTotal.toFixed(2),
+              total_sales: (cashTotal + upiTotal + cardTotal).toFixed(2),
+            },
+          };
+        })
+      );
+
+      return sendServiceData(enhancedHandovers);
     } catch (error) {
       console.error(`${TAG} - getHandovers: `, error);
       return sendServiceMessage("messages.apis.app.sale.handover.read.error");
@@ -2156,6 +2235,7 @@ module.exports = {
           "handover_id",
           "branch_id",
           "manager_id",
+          "biller_id",
           "cash_amount",
           "status",
           "approval_date",
@@ -2170,7 +2250,86 @@ module.exports = {
         );
       }
 
-      return sendServiceData(handover);
+      // Calculate payment totals from FinancialTransaction table
+      const shiftStart = handover.register.shift_start;
+      const shiftEnd = handover.register.shift_end || Date.now();
+
+      // Fetch transactions for this shift
+      const cashTransactions = await FinancialTransaction.findAll({
+        where: {
+          branch_id: handover.branch_id,
+          employee_id: handover.biller_id,
+          transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+          payment_method: "CASH",
+        },
+        attributes: ["amount"],
+      });
+
+      const upiTransactions = await FinancialTransaction.findAll({
+        where: {
+          branch_id: handover.branch_id,
+          employee_id: handover.biller_id,
+          transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+          payment_method: "UPI",
+        },
+        attributes: ["amount"],
+      });
+
+      const cardTransactions = await FinancialTransaction.findAll({
+        where: {
+          branch_id: handover.branch_id,
+          employee_id: handover.biller_id,
+          transaction_date: { [Op.between]: [shiftStart, shiftEnd] },
+          payment_method: "CARD",
+        },
+        attributes: ["amount"],
+      });
+
+      // Calculate totals
+      const cashTotal = cashTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount),
+        0
+      );
+
+      const upiTotal = upiTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount),
+        0
+      );
+
+      const cardTotal = cardTransactions.reduce(
+        (sum, transaction) => sum + parseFloat(transaction.amount),
+        0
+      );
+
+      // Enhance handover data with payment totals and shift times
+      const enhancedHandover = {
+        ...handover.toJSON(),
+        shift_times: {
+          check_in: handover.register.shift_start,
+          check_out: handover.register.shift_end,
+          check_in_formatted: moment(handover.register.shift_start).format(
+            "DD-MM-YYYY HH:mm:ss"
+          ),
+          check_out_formatted: handover.register.shift_end
+            ? moment(handover.register.shift_end).format("DD-MM-YYYY HH:mm:ss")
+            : null,
+        },
+        payment_totals: {
+          cash_total: cashTotal.toFixed(2),
+          upi_total: upiTotal.toFixed(2),
+          card_total: cardTotal.toFixed(2),
+          total_sales: (cashTotal + upiTotal + cardTotal).toFixed(2),
+        },
+        register_details: {
+          opening_balance: handover.register.opening_balance,
+          closing_balance: handover.register.closing_balance,
+          expected_cash_balance: (
+            parseFloat(handover.register.opening_balance) + cashTotal
+          ).toFixed(2),
+        },
+      };
+
+      return sendServiceData(enhancedHandover);
     } catch (error) {
       console.error(`${TAG} - getHandover: `, error);
       return sendServiceMessage("messages.apis.app.sale.handover.read.error");

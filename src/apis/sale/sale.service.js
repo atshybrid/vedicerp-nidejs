@@ -759,6 +759,43 @@ module.exports = {
         };
       });
 
+      // Fetch payment information from FinancialTransaction table
+      const paymentTransactions = await FinancialTransaction.findAll({
+        where: {
+          reference_number: sale.sale_id.toString(),
+          transaction_type: "SALE",
+        },
+        attributes: ["payment_method", "amount"],
+      });
+
+      // Process payment modes
+      let paymentModes = [];
+      let totalPaidAmount = 0;
+
+      if (paymentTransactions.length > 0) {
+        // Group by payment method and sum amounts
+        const paymentSummary = {};
+        paymentTransactions.forEach((transaction) => {
+          const method = transaction.payment_method;
+          const amount = parseFloat(transaction.amount);
+
+          if (paymentSummary[method]) {
+            paymentSummary[method] += amount;
+          } else {
+            paymentSummary[method] = amount;
+          }
+          totalPaidAmount += amount;
+        });
+
+        // Convert to array format
+        paymentModes = Object.entries(paymentSummary).map(
+          ([method, amount]) => ({
+            payment_method: method,
+            amount: amount.toFixed(2),
+          })
+        );
+      }
+
       // Final response
       const result = {
         sale_details: {
@@ -772,6 +809,13 @@ module.exports = {
           sale_date: sale.sale_date,
           invoice_number: sale.invoice_number,
           payment_status: sale.payment_status,
+          payment_modes: paymentModes,
+          payment_summary: {
+            total_paid: totalPaidAmount.toFixed(2),
+            balance_due: (
+              parseFloat(sale.total_amount) - totalPaidAmount
+            ).toFixed(2),
+          },
         },
         items,
       };
@@ -972,10 +1016,47 @@ module.exports = {
             };
           });
 
+          // Fetch payment information from FinancialTransaction table
+          const paymentTransactions = await FinancialTransaction.findAll({
+            where: {
+              reference_number: sale.sale_id.toString(),
+              transaction_type: "SALE",
+            },
+            attributes: ["payment_method", "amount"],
+          });
+
+          // Process payment modes
+          let paymentModes = [];
+          let totalPaidAmount = 0;
+
+          if (paymentTransactions.length > 0) {
+            // Group by payment method and sum amounts
+            const paymentSummary = {};
+            paymentTransactions.forEach((transaction) => {
+              const method = transaction.payment_method;
+              const amount = parseFloat(transaction.amount);
+
+              if (paymentSummary[method]) {
+                paymentSummary[method] += amount;
+              } else {
+                paymentSummary[method] = amount;
+              }
+              totalPaidAmount += amount;
+            });
+
+            // Convert to array format
+            paymentModes = Object.entries(paymentSummary).map(
+              ([method, amount]) => ({
+                payment_method: method,
+                amount: amount.toFixed(2),
+              })
+            );
+          }
+
           // Increment total sales amount
           totalSalesAmount += Number(sale.total_amount);
 
-          // Return structured sale details
+          // Return structured sale details with payment modes
           return {
             sale_id: sale.sale_id,
             customer: sale.customer,
@@ -987,6 +1068,13 @@ module.exports = {
             sale_date: sale.sale_date,
             payment_status: sale.payment_status,
             invoice_number: sale.invoice_number,
+            payment_modes: paymentModes,
+            payment_summary: {
+              total_paid: totalPaidAmount.toFixed(2),
+              balance_due: (
+                parseFloat(sale.total_amount) - totalPaidAmount
+              ).toFixed(2),
+            },
             items,
           };
         })
